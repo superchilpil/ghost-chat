@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"ghost-chat/internal/auth"
 	"ghost-chat/internal/chat"
 	"ghost-chat/internal/chat/kick"
 	"ghost-chat/internal/chat/twitch"
@@ -14,35 +15,54 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sync"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 type App struct {
-	app            *application.App
-	window         *application.WebviewWindow
-	config         *config.Config
-	configPath     string
-	clients        map[chat.Platform]chat.Client
-	emit           func(event string, data any)
-	version        string
-	preExpandWidth int
-	vanished       bool
-	lastX, lastY   int
-	lastW, lastH   int
+	app              *application.App
+	window           *application.WebviewWindow
+	config           *config.Config
+	configMu         sync.Mutex
+	configPath       string
+	auth             *auth.Manager
+	clients          map[chat.Platform]chat.Client
+	redemptions      *twitch.EventSub
+	redemptionsMu    sync.Mutex
+	twitchChannel    string
+	authMu           sync.Mutex
+	authLoginPending bool
+	emit             func(event string, data any)
+	version          string
+	preExpandWidth   int
+	vanished         bool
+	lastX, lastY     int
+	lastW, lastH     int
 }
 
 func NewApp(cfg *config.Config, configPath string, version string) *App {
-	return &App{
+	a := &App{
 		config:     cfg,
 		configPath: configPath,
+		auth:       auth.NewManager(auth.NewKeychainTokenStore()),
 		version:    version,
 		lastX:      cfg.WindowState.X,
 		lastY:      cfg.WindowState.Y,
 		lastW:      cfg.WindowState.Width,
 		lastH:      cfg.WindowState.Height,
 	}
+
+	onMessage := func(msg chat.ChatMessage) {
+		if a.emit != nil {
+			a.emit("chat:message", msg)
+		}
+	}
+
+	a.redemptions = twitch.NewEventSub(onMessage, twitchAuthAdapter{m: a.auth}, a.handleRedemptionAuthLost)
+
+	return a
 }
 
 func (a *App) SetApp(app *application.App, win *application.WebviewWindow) {
@@ -123,10 +143,15 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 		}
 	}()
 
+	go a.restoreTwitchAuth()
+
 	return nil
 }
 
 func (a *App) SaveWindowState() {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
 	a.config.WindowState.X = a.lastX
 	a.config.WindowState.Y = a.lastY
 
@@ -150,6 +175,11 @@ func (a *App) ServiceShutdown() error {
 		for _, c := range a.clients {
 			c.Disconnect()
 		}
+
+		if a.redemptions != nil {
+			a.redemptions.Stop()
+		}
+
 		ghHotkey.Unregister()
 	}()
 
@@ -157,19 +187,31 @@ func (a *App) ServiceShutdown() error {
 }
 
 func (a *App) GetConfig() *config.Config {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
 	return a.config
 }
 
 func (a *App) UpdateConfig(cfg *config.Config) error {
+	a.configMu.Lock()
+
 	oldConfig := a.config
 	oldKeybind := a.config.Keybinds.Vanish.Keybind
+	account := a.config.Twitch.Account
 
 	a.config = cfg
+	a.config.Twitch.Account = account
 
 	if err := config.Save(a.config, a.configPath); err != nil {
 		a.config = oldConfig
+
+		a.configMu.Unlock()
+
 		return err
 	}
+
+	a.configMu.Unlock()
 
 	if cfg.Keybinds.Vanish.Keybind != oldKeybind {
 		if err := ghHotkey.Register(cfg.Keybinds.Vanish.Keybind, a.ToggleVanish); err != nil {
@@ -187,7 +229,15 @@ func (a *App) Connect(platform chat.Platform, input string) error {
 		return fmt.Errorf("unknown platform: %s", platform)
 	}
 
-	return c.Connect(input)
+	if err := c.Connect(input); err != nil {
+		return err
+	}
+
+	if platform == chat.PlatformTwitch {
+		a.setTwitchChannel(input)
+	}
+
+	return nil
 }
 
 func (a *App) Disconnect(platform chat.Platform) error {
@@ -198,6 +248,10 @@ func (a *App) Disconnect(platform chat.Platform) error {
 	}
 
 	c.Disconnect()
+
+	if platform == chat.PlatformTwitch {
+		a.clearTwitchChannel()
+	}
 
 	return nil
 }

@@ -34,7 +34,8 @@
         "disconnected": "Disconnected",
         "scroll_to_bottom": "Scroll to bottom",
         "scroll_to_top": "Scroll to top",
-        "vanish": "Toggle vanish mode"
+        "vanish": "Toggle vanish mode",
+        "redemption": "{{user}} redeemed {{reward}} ({{cost}} points)"
     },
     "settings": {
         "support": "Enjoying Ghost Chat? Consider supporting the project!",
@@ -62,6 +63,13 @@
             "user_blacklist_placeholder": "user1, user2, ..."
         },
         "twitch": {
+            "account": "Twitch Account",
+            "account_hint": "Connect your Twitch account to enable channel point redemptions.",
+            "connect": "Connect",
+            "pending_instruction": "Enter this code on Twitch to authorize Ghost Chat:",
+            "open_twitch": "Open Twitch",
+            "connected_as": "Connected as {{login}}",
+            "logout": "Log out",
             "bots": "Show Bots",
             "hide_commands": "Hide Commands",
             "hide_badges": "Hide Badges",
@@ -70,6 +78,8 @@
             "events_subs": "Subscriptions",
             "events_raids": "Raids",
             "events_announcements": "Announcements",
+            "events_redemptions": "Channel Point Redemptions",
+            "events_redemptions_hint": "Connect your Twitch account to enable channel point redemptions.",
             "events_other": "Other Events"
         },
         "youtube": {
