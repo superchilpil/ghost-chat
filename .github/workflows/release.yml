@@ -185,8 +185,6 @@ jobs:
           releaseDate: '${DATE}'
           EOF
 
-          # The Mac release is currently a ZIP rather than the DMG name used
-          # by the legacy manifest. Keep the existing file for compatibility.
           DUMMY_SHA="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
           cat > artifacts/latest-mac.yml <<EOF
           version: ${VERSION}
