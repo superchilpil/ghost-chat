@@ -165,7 +165,7 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Generate updater manifest for Windows installer
+      - name: Generate Windows installer updater manifest
         shell: bash
         run: |
           VERSION="${VERSION_TAG#v}"
@@ -215,7 +215,7 @@ jobs:
 
             ### Settings persistence
 
-            Your Ghost Chat settings are stored in your Windows user configuration directory, separate from the application installation directory. Uninstalling Ghost Chat does not remove that configuration, so reinstalling the app keeps your settings.
+            Ghost Chat stores its configuration in the Windows user configuration directory rather than inside the application install directory. The installer/uninstaller therefore leaves the configuration intact, allowing a reinstall to retain your settings.
 
             ### Installation / Usage / Bug reporting
 
@@ -227,3 +227,4 @@ jobs:
             artifacts/ghost-chat.exe
             artifacts/ghost-chat-Setup-${{ needs.determine-version.outputs.version }}.exe
             artifacts/latest.yml
+            artifacts/latest-mac.yml
