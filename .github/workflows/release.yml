@@ -118,14 +118,30 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
 
-      - run: wails3 task build
+      - name: Build Windows application
+        run: wails3 task build
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
+
+      - name: Build Windows NSIS installer
+        run: wails3 task package FORMAT=nsis
+        env:
+          VERSION: ${{ needs.determine-version.outputs.version }}
+
+      - name: Prepare Windows release assets
+        shell: bash
+        run: |
+          VERSION="${VERSION_TAG#v}"
+          mv "bin/ghost-chat-amd64-installer.exe" "bin/ghost-chat-Setup-${VERSION}.exe"
+        env:
+          VERSION_TAG: ${{ needs.determine-version.outputs.version }}
 
       - uses: actions/upload-artifact@v7
         with:
           name: ghost-chat-windows
-          path: bin/ghost-chat.exe
+          path: |
+            bin/ghost-chat.exe
+            bin/ghost-chat-Setup-${{ needs.determine-version.outputs.version }}.exe
 
   create-release:
     needs: [determine-version, build-macos, build-windows]
@@ -149,31 +165,23 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Generate electron-updater manifests
+      - name: Generate updater manifest for Windows installer
+        shell: bash
         run: |
           VERSION="${VERSION_TAG#v}"
           DATE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
-          DUMMY_SHA="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          INSTALLER="ghost-chat-Setup-${VERSION}.exe"
+          SHA512="$(sha512sum "artifacts/${INSTALLER}" | awk '{print $1}')"
+          SIZE="$(stat -c%s "artifacts/${INSTALLER}")"
 
           cat > artifacts/latest.yml <<EOF
           version: ${VERSION}
           files:
-            - url: ghost-chat-Setup-${VERSION}.exe
-              sha512: ${DUMMY_SHA}
-              size: 1
-          path: ghost-chat-Setup-${VERSION}.exe
-          sha512: ${DUMMY_SHA}
-          releaseDate: '${DATE}'
-          EOF
-
-          cat > artifacts/latest-mac.yml <<EOF
-          version: ${VERSION}
-          files:
-            - url: ghost-chat-${VERSION}.dmg
-              sha512: ${DUMMY_SHA}
-              size: 1
-          path: ghost-chat-${VERSION}.dmg
-          sha512: ${DUMMY_SHA}
+            - url: ${INSTALLER}
+              sha512: ${SHA512}
+              size: ${SIZE}
+          path: ${INSTALLER}
+          sha512: ${SHA512}
           releaseDate: '${DATE}'
           EOF
 
@@ -201,8 +209,13 @@ jobs:
 
             ## Downloads
 
-            - **Download for [Windows](https://github.com/Enubia/ghost-chat/releases/latest/download/ghost-chat.exe)**
-            - **Download for [Mac](https://github.com/Enubia/ghost-chat/releases/latest/download/ghost-chat-macos.zip)**
+            - **Windows installer:** [ghost-chat Setup](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat-Setup-${VERSION_TAG#v}.exe)
+            - **Windows portable:** [ghost-chat.exe](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat.exe)
+            - **Mac:** [ghost-chat-macos.zip](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat-macos.zip)
+
+            ### Settings persistence
+
+            Your Ghost Chat settings are stored in your Windows user configuration directory, separate from the application installation directory. Uninstalling Ghost Chat does not remove that configuration, so reinstalling the app keeps your settings.
 
             ### Installation / Usage / Bug reporting
 
@@ -212,5 +225,5 @@ jobs:
           files: |
             artifacts/ghost-chat-macos.zip
             artifacts/ghost-chat.exe
+            artifacts/ghost-chat-Setup-${{ needs.determine-version.outputs.version }}.exe
             artifacts/latest.yml
-            artifacts/latest-mac.yml
