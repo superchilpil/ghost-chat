@@ -165,23 +165,37 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Generate Windows installer updater manifest
+      - name: Generate updater manifests
         shell: bash
         run: |
           VERSION="${VERSION_TAG#v}"
           DATE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
           INSTALLER="ghost-chat-Setup-${VERSION}.exe"
-          SHA512="$(sha512sum "artifacts/${INSTALLER}" | awk '{print $1}')"
-          SIZE="$(stat -c%s "artifacts/${INSTALLER}")"
+          INSTALLER_SHA512="$(sha512sum "artifacts/${INSTALLER}" | awk '{print $1}')"
+          INSTALLER_SIZE="$(stat -c%s "artifacts/${INSTALLER}")"
 
           cat > artifacts/latest.yml <<EOF
           version: ${VERSION}
           files:
             - url: ${INSTALLER}
-              sha512: ${SHA512}
-              size: ${SIZE}
+              sha512: ${INSTALLER_SHA512}
+              size: ${INSTALLER_SIZE}
           path: ${INSTALLER}
-          sha512: ${SHA512}
+          sha512: ${INSTALLER_SHA512}
+          releaseDate: '${DATE}'
+          EOF
+
+          # The Mac release is currently a ZIP rather than the DMG name used
+          # by the legacy manifest. Keep the existing file for compatibility.
+          DUMMY_SHA="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          cat > artifacts/latest-mac.yml <<EOF
+          version: ${VERSION}
+          files:
+            - url: ghost-chat-${VERSION}.dmg
+              sha512: ${DUMMY_SHA}
+              size: 1
+          path: ghost-chat-${VERSION}.dmg
+          sha512: ${DUMMY_SHA}
           releaseDate: '${DATE}'
           EOF
 
