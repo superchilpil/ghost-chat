@@ -36,9 +36,10 @@ type App struct {
 	redemptionsMu    sync.Mutex
 	twitchChannel    string
 	authMu           sync.Mutex
-	connectionMu     sync.Mutex
-	connectionState  map[chat.Platform]bool
-	connectionTransport map[chat.Platform]string
+	connectionMu          sync.Mutex
+	connectionState       map[chat.Platform]bool
+	connectionTransport   map[chat.Platform]string
+	transportMu           sync.Mutex
 	autoOwned        map[chat.Platform]bool
 	liveMonitorCancel context.CancelFunc
 	authLoginPending bool
@@ -114,21 +115,21 @@ func (a *App) wireClients() {
 		if event == "chat:connected" {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
-					a.connectionMu.Lock()
+					a.transportMu.Lock()
 					transport := payload["transport"]
 					if reason := payload["reason"]; reason != "" {
 						transport += ":" + reason
 					}
 					a.connectionTransport[chat.Platform(platform)] = transport
-					a.connectionMu.Unlock()
+					a.transportMu.Unlock()
 				}
 			}
 		} else if event == "chat:disconnected" {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
-					a.connectionMu.Lock()
+					a.transportMu.Lock()
 					delete(a.connectionTransport, chat.Platform(platform))
-					a.connectionMu.Unlock()
+					a.transportMu.Unlock()
 				}
 			}
 		}
@@ -280,11 +281,18 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 // frontend can recover state even if a connection event fired before the UI mounted.
 func (a *App) GetConnectionStatus() map[string]map[string]string {
 	a.connectionMu.Lock()
-	defer a.connectionMu.Unlock()
+	connected := make(map[chat.Platform]bool, len(a.connectionState))
+	for platform, value := range a.connectionState {
+		connected[platform] = value
+	}
+	a.connectionMu.Unlock()
+
+	a.transportMu.Lock()
+	defer a.transportMu.Unlock()
 
 	result := make(map[string]map[string]string)
-	for platform, connected := range a.connectionState {
-		if !connected {
+	for platform, isConnected := range connected {
+		if !isConnected {
 			continue
 		}
 		result[string(platform)] = map[string]string{
