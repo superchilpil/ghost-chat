@@ -265,9 +265,6 @@ jobs:
             A detailed description is available on our [wiki](https://github.com/Enubia/ghost-chat/wiki).
 
             ---
+          # Attach every normalized release artifact. Using a directory glob prevents the Windows NSIS installer from being omitted by filename expression handling.
           files: |
-            artifacts/ghost-chat-macos.zip
-            artifacts/ghost-chat.exe
-            artifacts/ghost-chat-Setup-${{ needs.determine-version.outputs.version }}.exe
-            artifacts/latest.yml
-            artifacts/latest-mac.yml
+            artifacts/*
