@@ -62,10 +62,10 @@ function App() {
 
     useEffect(() => {
         const cancelConnected = Events.On('chat:connected', (ev) => {
-            const { platform, transport } = ev.data as { platform: Platform; transport?: string };
+            const { platform, transport, reason } = ev.data as { platform: Platform; transport?: string; reason?: string };
             setConnected(platform, true);
             if (transport) {
-                setTransport(platform, transport);
+                setTransport(platform, reason ? `${transport}:${reason}` : transport);
             }
         });
 
