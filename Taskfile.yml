@@ -25,6 +25,9 @@ tasks:
     summary: Packages a production build of the application
     cmds:
       - task: "{{OS}}:package"
+        vars:
+          YOUTUBE_API_KEY:
+            ref: .YOUTUBE_API_KEY
 
   run:
     summary: Runs the application
