@@ -3,6 +3,8 @@ module ghost-chat
 go 1.25.0
 
 require (
+	github.com/codigolandia/live-quest v1.0.0-beta4
+	google.golang.org/grpc v1.76.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.97
 	github.com/zalando/go-keyring v0.2.8
