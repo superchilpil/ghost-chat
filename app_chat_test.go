@@ -110,6 +110,34 @@ func TestConnectCallsClient(t *testing.T) {
 	}
 }
 
+func TestConnectPersistsKickChannel(t *testing.T) {
+	a, fc, _ := newTestApp()
+	a.clients[chat.PlatformKick] = fc
+	a.configPath = t.TempDir() + "/config.json"
+
+	if err := a.Connect(chat.PlatformKick, "mykick"); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+
+	if got := a.config.Kick.DefaultChannel; got != "mykick" {
+		t.Fatalf("Kick.DefaultChannel = %q, want %q", got, "mykick")
+	}
+}
+
+func TestConnectPersistsYouTubeInput(t *testing.T) {
+	a, fc, _ := newTestApp()
+	a.clients[chat.PlatformYouTube] = fc
+	a.configPath = t.TempDir() + "/config.json"
+
+	if err := a.Connect(chat.PlatformYouTube, "https://youtube.com/watch?v=test"); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+
+	if got := a.config.YouTube.VideoURL; got != "https://youtube.com/watch?v=test" {
+		t.Fatalf("YouTube.VideoURL = %q, want persisted input", got)
+	}
+}
+
 func TestDisconnectCallsClient(t *testing.T) {
 	a, fc, _ := newTestApp()
 
