@@ -150,7 +150,7 @@ jobs:
           name: ghost-chat-windows
           path: |
             bin/ghost-chat.exe
-            bin/ghost-chat-Setup-${{ needs.determine-version.outputs.version }}.exe
+            bin/ghost-chat-Setup-*.exe
 
   create-release:
     needs: [determine-version, build-macos, build-windows]
