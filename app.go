@@ -10,8 +10,11 @@ import (
 	"ghost-chat/internal/chat/youtube"
 	"ghost-chat/internal/config"
 	ghHotkey "ghost-chat/internal/hotkey"
+	"ghost-chat/internal/live"
 	"ghost-chat/internal/updater"
 	"os"
+	"strings"
+	"time"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -33,6 +36,10 @@ type App struct {
 	redemptionsMu    sync.Mutex
 	twitchChannel    string
 	authMu           sync.Mutex
+	connectionMu     sync.Mutex
+	connectionState  map[chat.Platform]bool
+	autoOwned        map[chat.Platform]bool
+	liveMonitorCancel context.CancelFunc
 	authLoginPending bool
 	emit             func(event string, data any)
 	version          string
@@ -48,6 +55,8 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		configPath: configPath,
 		auth:       auth.NewManager(auth.NewKeychainTokenStore()),
 		version:    version,
+		connectionState: make(map[chat.Platform]bool),
+		autoOwned:       make(map[chat.Platform]bool),
 		lastX:      cfg.WindowState.X,
 		lastY:      cfg.WindowState.Y,
 		lastW:      cfg.WindowState.Width,
@@ -144,6 +153,7 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 	}()
 
 	go a.restoreTwitchAuth()
+	go a.startLiveMonitor()
 
 	return nil
 }
@@ -170,6 +180,10 @@ func (a *App) SaveWindowState() {
 
 func (a *App) ServiceShutdown() error {
 	a.SaveWindowState()
+
+	if a.liveMonitorCancel != nil {
+		a.liveMonitorCancel()
+	}
 
 	go func() {
 		for _, c := range a.clients {
@@ -223,15 +237,33 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 }
 
 func (a *App) Connect(platform chat.Platform, input string) error {
-	c, ok := a.clients[platform]
+	return a.connect(platform, input, false)
+}
 
+func (a *App) connect(platform chat.Platform, input string, automatic bool) error {
+	c, ok := a.clients[platform]
 	if !ok {
 		return fmt.Errorf("unknown platform: %s", platform)
+	}
+
+	a.connectionMu.Lock()
+	defer a.connectionMu.Unlock()
+
+	if a.connectionState[platform] {
+		if automatic {
+			return nil
+		}
+		c.Disconnect()
+		a.connectionState[platform] = false
+		a.autoOwned[platform] = false
 	}
 
 	if err := c.Connect(input); err != nil {
 		return err
 	}
+
+	a.connectionState[platform] = true
+	a.autoOwned[platform] = automatic
 
 	switch platform {
 	case chat.PlatformTwitch:
@@ -289,14 +321,119 @@ func (a *App) setYouTubeInput(input string) {
 
 func (a *App) Disconnect(platform chat.Platform) error {
 	c, ok := a.clients[platform]
-
 	if !ok {
 		return fmt.Errorf("unknown platform: %s", platform)
 	}
 
+	a.connectionMu.Lock()
+	defer a.connectionMu.Unlock()
+
 	c.Disconnect()
+	a.connectionState[platform] = false
+	a.autoOwned[platform] = false
 
 	return nil
+}
+
+func (a *App) startLiveMonitor() {
+	ctx, cancel := context.WithCancel(context.Background())
+	a.liveMonitorCancel = cancel
+
+	go func() {
+		ticker := time.NewTicker(live.PollInterval())
+		defer ticker.Stop()
+
+		a.pollLivePlatforms(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				a.pollLivePlatforms(ctx)
+			}
+		}
+	}()
+}
+
+func (a *App) pollLivePlatforms(ctx context.Context) {
+	a.configMu.Lock()
+	cfg := *a.config
+	a.configMu.Unlock()
+
+	// Each service is checked independently. One service being offline or
+	// temporarily unreachable never prevents the other services from connecting.
+	go a.pollTwitchLive(ctx, cfg.Twitch.DefaultChannel)
+	go a.pollKickLive(ctx, cfg.Kick.DefaultChannel)
+	go a.pollYouTubeLive(ctx, cfg.YouTube.ChannelID)
+}
+
+func (a *App) pollTwitchLive(ctx context.Context, channel string) {
+	if strings.TrimSpace(channel) == "" {
+		return
+	}
+
+	token := ""
+	if a.auth.LoggedIn() {
+		if t, err := a.auth.AccessToken(ctx); err == nil {
+			token = t
+		}
+	}
+
+	isLive, err := live.CheckTwitch(ctx, channel, token)
+	if err != nil {
+		return
+	}
+
+	a.applyLiveState(chat.PlatformTwitch, isLive, channel)
+}
+
+func (a *App) pollKickLive(ctx context.Context, channel string) {
+	if strings.TrimSpace(channel) == "" {
+		return
+	}
+
+	isLive, err := live.CheckKick(ctx, channel)
+	if err != nil {
+		return
+	}
+
+	a.applyLiveState(chat.PlatformKick, isLive, channel)
+}
+
+func (a *App) pollYouTubeLive(ctx context.Context, channel string) {
+	if strings.TrimSpace(channel) == "" {
+		return
+	}
+
+	videoURL, isLive, err := live.CheckYouTube(ctx, channel, youtube.ResolveVideoURL)
+	if err != nil || !isLive {
+		a.applyLiveState(chat.PlatformYouTube, false, "")
+		return
+	}
+
+	a.applyLiveState(chat.PlatformYouTube, true, videoURL)
+}
+
+func (a *App) applyLiveState(platform chat.Platform, isLive bool, input string) {
+	a.connectionMu.Lock()
+	connected := a.connectionState[platform]
+	automatic := a.autoOwned[platform]
+	a.connectionMu.Unlock()
+
+	if isLive {
+		if !connected {
+			if err := a.connect(platform, input, true); err == nil {
+				a.emit("chat:auto-connected", map[string]string{"platform": string(platform)})
+			}
+		}
+		return
+	}
+
+	if connected && automatic {
+		if err := a.Disconnect(platform); err == nil {
+			a.emit("chat:auto-disconnected", map[string]string{"platform": string(platform)})
+		}
+	}
 }
 
 func (a *App) ResolveYouTubeVideo(input string) (string, error) {
