@@ -95,6 +95,7 @@ func (c *Client) Connect(input string) error {
 	if apiKey != "" {
 		chatID, err := fetchLiveChatID(ctx, videoURL, apiKey)
 		if err == nil && chatID != "" {
+			logf("using StreamList transport")
 			c.mu.Lock()
 			c.cancel = cancel
 			c.mu.Unlock()
@@ -103,6 +104,16 @@ func (c *Client) Connect(input string) error {
 			go c.streamLoop(ctx, chatID, apiKey)
 			return nil
 		}
+
+		// Keep the failure reason visible in the UI so release builds can be
+		// diagnosed without exposing the API key itself.
+		if err != nil {
+			logf("StreamList unavailable: %v; falling back to Innertube", err)
+		} else {
+			logf("StreamList unavailable: no active live chat ID; falling back to Innertube")
+		}
+	} else {
+		logf("no YouTube Data API key in this build; using Innertube fallback")
 	}
 
 	// Preserve the existing public/unauthenticated transport as a fallback.
