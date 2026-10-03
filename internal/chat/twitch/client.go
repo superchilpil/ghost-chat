@@ -3,6 +3,7 @@ package twitch
 import (
 	"context"
 	"fmt"
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -118,9 +119,17 @@ func (c *Client) Disconnect() {
 }
 
 func (c *Client) sendHandshake(conn *websocket.Conn, channel string) error {
-	if len(channel) == 0 {
+	channel = strings.TrimSpace(channel)
+	channel = strings.TrimPrefix(channel, "#")
+	channel = strings.TrimPrefix(channel, "@")
+	if channel == "" {
 		return fmt.Errorf("channel is empty")
 	}
+
+	// Twitch supports anonymous IRC connections with a justinfan nickname.
+	// Use a fresh nickname for every connection instead of reusing one fixed
+	// nickname across all GhostChat instances.
+	nick := fmt.Sprintf("justinfan%d", time.Now().UnixNano()%1000000000)
 
 	if err := conn.WriteMessage(websocket.TextMessage, []byte("CAP REQ :twitch.tv/tags twitch.tv/commands")); err != nil {
 		return err
@@ -130,17 +139,11 @@ func (c *Client) sendHandshake(conn *websocket.Conn, channel string) error {
 		return err
 	}
 
-	if err := conn.WriteMessage(websocket.TextMessage, []byte("NICK justinfan12345")); err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, []byte("NICK "+nick)); err != nil {
 		return err
 	}
 
-	joinLine := "JOIN "
-
-	if channel[0] != '#' {
-		joinLine += "#"
-	}
-
-	joinLine += channel
+	joinLine := "JOIN #" + channel
 
 	if err := conn.WriteMessage(websocket.TextMessage, []byte(joinLine)); err != nil {
 		return err
