@@ -33,6 +33,7 @@ export function Chat() {
     const [showKick, setShowKick] = useState(true);
     const twitchConnected = useConnectionStore((s) => s.connected[Platform.PlatformTwitch]);
     const youtubeConnected = useConnectionStore((s) => s.connected[Platform.PlatformYouTube]);
+    const youtubeTransport = useConnectionStore((s) => s.transports[Platform.PlatformYouTube]);
     const kickConnected = useConnectionStore((s) => s.connected[Platform.PlatformKick]);
     const connected = twitchConnected || youtubeConnected || kickConnected;
     const connectedCount = [twitchConnected, youtubeConnected, kickConnected].filter(Boolean).length;
@@ -238,6 +239,11 @@ export function Chat() {
                         />
                     </svg>
                 </button>
+                {youtubeConnected && youtubeTransport && (
+                    <span className={styles.transport} title="YouTube chat transport">
+                        YouTube: {youtubeTransport === 'streamList' ? 'StreamList' : 'Innertube fallback'}
+                    </span>
+                )}
                 {!connected && <span className={styles.disconnected}>{t('chat.disconnected')}</span>}
             </div>
             <div
