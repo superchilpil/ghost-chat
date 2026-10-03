@@ -245,6 +245,20 @@ func (a *App) Connect(platform chat.Platform, input string) error {
 	return nil
 }
 
+func (a *App) setTwitchChannel(channel string) {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
+	if a.config.Twitch.DefaultChannel == channel {
+		return
+	}
+
+	a.config.Twitch.DefaultChannel = channel
+	if err := config.Save(a.config, a.configPath); err != nil {
+		fmt.Printf("failed to save Twitch channel: %s\n", err)
+	}
+}
+
 func (a *App) setKickChannel(channel string) {
 	a.configMu.Lock()
 	defer a.configMu.Unlock()
@@ -255,7 +269,7 @@ func (a *App) setKickChannel(channel string) {
 
 	a.config.Kick.DefaultChannel = channel
 	if err := config.Save(a.config, a.configPath); err != nil {
-		fmt.Printf("failed to save Kick channel: %s\\n", err)
+		fmt.Printf("failed to save Kick channel: %s\n", err)
 	}
 }
 
@@ -269,7 +283,7 @@ func (a *App) setYouTubeInput(input string) {
 
 	a.config.YouTube.VideoURL = input
 	if err := config.Save(a.config, a.configPath); err != nil {
-		fmt.Printf("failed to save YouTube input: %s\\n", err)
+		fmt.Printf("failed to save YouTube input: %s\n", err)
 	}
 }
 
@@ -281,10 +295,6 @@ func (a *App) Disconnect(platform chat.Platform) error {
 	}
 
 	c.Disconnect()
-
-	if platform == chat.PlatformTwitch {
-		a.clearTwitchChannel()
-	}
 
 	return nil
 }
