@@ -38,6 +38,7 @@ type App struct {
 	authMu           sync.Mutex
 	connectionMu     sync.Mutex
 	connectionState  map[chat.Platform]bool
+	connectionTransport map[chat.Platform]string
 	autoOwned        map[chat.Platform]bool
 	liveMonitorCancel context.CancelFunc
 	authLoginPending bool
@@ -55,8 +56,9 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		configPath: configPath,
 		auth:       auth.NewManager(auth.NewKeychainTokenStore()),
 		version:    version,
-		connectionState: make(map[chat.Platform]bool),
-		autoOwned:       make(map[chat.Platform]bool),
+		connectionState:    make(map[chat.Platform]bool),
+		connectionTransport: make(map[chat.Platform]string),
+		autoOwned:          make(map[chat.Platform]bool),
 		lastX:      cfg.WindowState.X,
 		lastY:      cfg.WindowState.Y,
 		lastW:      cfg.WindowState.Width,
@@ -107,7 +109,27 @@ func cfgYouTubeAPIKey(cfg *config.Config) string {
 }
 
 func (a *App) wireClients() {
-	onMessage, onEvent := makeHandlers(a.emit)
+	onMessage, rawOnEvent := makeHandlers(a.emit)
+	onEvent := func(event string, data any) {
+		if event == "chat:connected" {
+			if payload, ok := data.(map[string]string); ok {
+				if platform, ok := payload["platform"]; ok {
+					a.connectionMu.Lock()
+					a.connectionTransport[chat.Platform(platform)] = payload["transport"]
+					a.connectionMu.Unlock()
+				}
+			}
+		} else if event == "chat:disconnected" {
+			if payload, ok := data.(map[string]string); ok {
+				if platform, ok := payload["platform"]; ok {
+					a.connectionMu.Lock()
+					delete(a.connectionTransport, chat.Platform(platform))
+					a.connectionMu.Unlock()
+				}
+			}
+		}
+		rawOnEvent(event, data)
+	}
 
 	a.clients = map[chat.Platform]chat.Client{
 		chat.PlatformTwitch:  twitch.NewClient(onMessage, onEvent),
@@ -248,6 +270,24 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	}
 
 	return nil
+}
+
+// GetConnectionStatus returns the current backend connection state so the
+// frontend can recover state even if a connection event fired before the UI mounted.
+func (a *App) GetConnectionStatus() map[string]map[string]string {
+	a.connectionMu.Lock()
+	defer a.connectionMu.Unlock()
+
+	result := make(map[string]map[string]string)
+	for platform, connected := range a.connectionState {
+		if !connected {
+			continue
+		}
+		result[string(platform)] = map[string]string{
+			"transport": a.connectionTransport[platform],
+		}
+	}
+	return result
 }
 
 func (a *App) Connect(platform chat.Platform, input string) error {
