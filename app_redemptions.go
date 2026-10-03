@@ -65,7 +65,7 @@ func (a *App) evaluateRedemptionsLocked() {
 	}
 }
 
-func (a *App) setTwitchChannel(channel string) {
+func (a *App) setRedemptionTwitchChannel(channel string) {
 	a.redemptionsMu.Lock()
 	defer a.redemptionsMu.Unlock()
 
