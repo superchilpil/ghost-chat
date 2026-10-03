@@ -3,7 +3,6 @@ package twitch
 import (
 	"context"
 	"fmt"
-	"fmt"
 	"log"
 	"strings"
 	"sync"
