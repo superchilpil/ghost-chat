@@ -77,6 +77,14 @@ func CheckTwitch(ctx context.Context, channel, accessToken string) (bool, error)
 }
 
 func checkTwitchPage(ctx context.Context, channel string) (bool, error) {
+	// Twitch's channel HTML is not a stable API and the old
+	// "isLiveBroadcast" marker is no longer reliable. Use the same
+	// anonymous GraphQL query the Twitch web client exposes for basic
+	// channel state, then keep the HTML check as a last-resort fallback.
+	if live, err := checkTwitchGraphQL(ctx, channel); err == nil {
+		return live, nil
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://www.twitch.tv/"+url.PathEscape(channel), nil)
 	if err != nil {
 		return false, err
@@ -102,6 +110,61 @@ func checkTwitchPage(ctx context.Context, channel string) (bool, error) {
 	html := string(body)
 	return strings.Contains(html, `"isLiveBroadcast":true`) ||
 		strings.Contains(html, `"isLiveBroadcast": true`), nil
+}
+
+type twitchGraphQLResponse struct {
+	Data struct {
+		User *struct {
+			Stream *struct {
+				ID string `json:"id"`
+			} `json:"stream"`
+		} `json:"user"`
+	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
+func checkTwitchGraphQL(ctx context.Context, channel string) (bool, error) {
+	const twitchWebClientID = "kimne78kx3ncx6brgo4mv6wki5h1ko"
+
+	query := `query LiveCheck($login: String!) {
+		user(login: $login) {
+			stream { id }
+		}
+	}`
+
+	payload := map[string]any{
+		"query":     query,
+		"variables": map[string]string{"login": channel},
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://gql.twitch.tv/gql", strings.NewReader(string(encoded)))
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("Client-ID", twitchWebClientID)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", browserUA)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var body twitchGraphQLResponse
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 2<<20)).Decode(&body); err != nil {
+		return false, err
+	}
+	if len(body.Errors) > 0 {
+		return false, fmt.Errorf("twitch graphql: %s", body.Errors[0].Message)
+	}
+	return body.Data.User != nil && body.Data.User.Stream != nil && body.Data.User.Stream.ID != "", nil
 }
 
 func CheckKick(ctx context.Context, channel string) (bool, error) {
