@@ -22,6 +22,14 @@
     }
 }
 
+.transport {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    font-weight: 500;
+    margin-left: auto;
+    margin-right: 4px;
+}
+
 .disconnected {
     font-size: 11px;
     color: var(--color-danger);
