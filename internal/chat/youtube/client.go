@@ -54,6 +54,11 @@ type Client struct {
 	cancel  context.CancelFunc
 	apiKey  string
 
+	// StreamList can replay a small overlap after a transient reconnect.
+	// Keep recently delivered message IDs so reconnects never duplicate chat.
+	seenMu  sync.Mutex
+	seenIDs map[string]struct{}
+
 	OnMessage MessageHandler
 	OnEvent   EventHandler
 }
@@ -63,6 +68,7 @@ func NewClient(onMessage MessageHandler, onEvent EventHandler) *Client {
 		apiKey:    strings.TrimSpace(buildconfig.YouTubeAPIKey),
 		OnMessage: onMessage,
 		OnEvent:   onEvent,
+		seenIDs:   make(map[string]struct{}),
 	}
 }
 
@@ -76,7 +82,33 @@ func (c *Client) SetAPIKey(apiKey string) {
 	c.mu.Unlock()
 }
 
+func (c *Client) markSeen(id string) bool {
+	if id == "" {
+		return false
+	}
+
+	c.seenMu.Lock()
+	defer c.seenMu.Unlock()
+
+	if _, exists := c.seenIDs[id]; exists {
+		return true
+	}
+	c.seenIDs[id] = struct{}{}
+
+	// Keep the cache bounded. Live chats can run for many hours.
+	if len(c.seenIDs) > 5000 {
+		c.seenIDs = make(map[string]struct{})
+		c.seenIDs[id] = struct{}{}
+	}
+
+	return false
+}
+
 func (c *Client) Connect(input string) error {
+	c.seenMu.Lock()
+	c.seenIDs = make(map[string]struct{})
+	c.seenMu.Unlock()
+
 	c.mu.Lock()
 	if c.cancel != nil {
 		c.cancel()
@@ -238,6 +270,9 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 
 		for _, item := range response.GetItems() {
 			if msg := convertStreamMessage(item); msg != nil {
+				if c.markSeen(msg.ID) {
+					continue
+				}
 				c.OnMessage(*msg)
 			}
 		}
