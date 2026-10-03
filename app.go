@@ -323,10 +323,14 @@ func (a *App) setYouTubeInput(input string) {
 	a.configMu.Lock()
 	defer a.configMu.Unlock()
 
-	if a.config.YouTube.VideoURL == input {
+	if a.config.YouTube.ChannelID == input {
 		return
 	}
 
+	// The Home screen accepts a channel handle/ID (and the client resolves it
+	// to the current live video). Persist that source as ChannelID so the live
+	// monitor can detect future broadcasts automatically.
+	a.config.YouTube.ChannelID = input
 	a.config.YouTube.VideoURL = input
 	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
 		yt.SetAPIKey(a.config.YouTube.APIKey)
