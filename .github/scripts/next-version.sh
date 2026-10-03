@@ -34,12 +34,16 @@ fi
 last_stable="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
 
 if [ -z "$last_stable" ]; then
-  echo "no stable tag found" >&2
-  exit 1
+  # This repository may not have a release tag yet. Start automatic
+  # versioning at v0.0.0 so the first release becomes v0.0.1.
+  last_stable="v0.0.0"
+  subjects="$(git log --format=%s)"
+  bodies="$(git log --format=%b)"
+else
+  subjects="$(git log --format=%s \"${last_stable}..HEAD\")"
+  bodies="$(git log --format=%b \"${last_stable}..HEAD\")"
 fi
 
-subjects="$(git log --format=%s "${last_stable}..HEAD")"
-bodies="$(git log --format=%b "${last_stable}..HEAD")"
 
 if [ -z "$subjects" ]; then
   echo "no commits since ${last_stable}" >&2
