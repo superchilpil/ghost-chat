@@ -115,7 +115,11 @@ func (a *App) wireClients() {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
 					a.connectionMu.Lock()
-					a.connectionTransport[chat.Platform(platform)] = payload["transport"]
+					transport := payload["transport"]
+					if reason := payload["reason"]; reason != "" {
+						transport += ":" + reason
+					}
+					a.connectionTransport[chat.Platform(platform)] = transport
 					a.connectionMu.Unlock()
 				}
 			}
