@@ -105,7 +105,7 @@ fi
 next="${prefix}${major}.${minor}.${patch}"
 
 if [ "$rc" = true ]; then
-  last_rc="$(git tag --list "${next}-rc.*" | sed "s/.*-rc\.//" | sort -n | tail -n 1)"
+  last_rc=$(git tag --list "${next}-rc.*" | sed 's/.*-rc\.//' | sort -n | tail -n 1)
   next="${next}-rc.$((${last_rc:-0} + 1))"
 fi
 
