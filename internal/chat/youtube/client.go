@@ -130,7 +130,9 @@ func (c *Client) Connect(input string) error {
 	c.cancel = cancel
 	c.mu.Unlock()
 
-	c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube"})
+	// The fallback path already emitted the connection event with its diagnostic reason.
+	// Do not emit a second event here, or the UI would lose that reason.
+
 	go c.pollLoop(ctx, videoURL, continuation, cfg)
 
 	return nil
