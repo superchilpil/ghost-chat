@@ -21,7 +21,7 @@ type githubRelease struct {
 func CheckForUpdate(currentVersion string) (*UpdateInfo, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/Enubia/ghost-chat/releases/latest", nil)
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/superchilpil/ghost-chat/releases/latest", nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
