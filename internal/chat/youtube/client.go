@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"crypto/tls"
 	"google.golang.org/grpc/metadata"
-	ytproto "github.com/codigolandia/live-quest/youtube/proto"
+	ytproto "ghost-chat/internal/chat/youtube/proto"
 )
 
 const (
