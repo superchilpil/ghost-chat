@@ -83,6 +83,9 @@ func (a *App) SetApp(app *application.App, win *application.WebviewWindow) {
 	}
 
 	a.wireClients()
+	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
+		yt.SetAPIKey(cfgYouTubeAPIKey(a.config))
+	}
 }
 
 func makeHandlers(emit func(string, any)) (func(chat.ChatMessage), func(string, any)) {
@@ -94,6 +97,13 @@ func makeHandlers(emit func(string, any)) (func(chat.ChatMessage), func(string, 
 	}
 
 	return onMessage, onEvent
+}
+
+func cfgYouTubeAPIKey(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.YouTube.APIKey
 }
 
 func (a *App) wireClients() {
@@ -217,6 +227,10 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	a.config = cfg
 	a.config.Twitch.Account = account
 
+	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
+		yt.SetAPIKey(cfg.YouTube.APIKey)
+	}
+
 	if err := config.Save(a.config, a.configPath); err != nil {
 		a.config = oldConfig
 
@@ -314,6 +328,9 @@ func (a *App) setYouTubeInput(input string) {
 	}
 
 	a.config.YouTube.VideoURL = input
+	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
+		yt.SetAPIKey(a.config.YouTube.APIKey)
+	}
 	if err := config.Save(a.config, a.configPath); err != nil {
 		fmt.Printf("failed to save YouTube input: %s\n", err)
 	}
