@@ -110,6 +110,19 @@ func TestConnectCallsClient(t *testing.T) {
 	}
 }
 
+func TestConnectPersistsTwitchChannel(t *testing.T) {
+	a, fc, _ := newTestApp()
+	a.configPath = t.TempDir() + "/config.json"
+
+	if err := a.Connect(chat.PlatformTwitch, "mytwitch"); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+
+	if got := a.config.Twitch.DefaultChannel; got != "mytwitch" {
+		t.Fatalf("Twitch.DefaultChannel = %q, want %q", got, "mytwitch")
+	}
+}
+
 func TestConnectPersistsKickChannel(t *testing.T) {
 	a, fc, _ := newTestApp()
 	a.clients[chat.PlatformKick] = fc
