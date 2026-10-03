@@ -48,8 +48,9 @@ if [ -z "$last_stable_tag" ]; then
   bodies="$(git log --format=%b)"
 else
   last_stable="$last_stable_tag"
-  subjects="$(git log --format=%s "${last_stable_tag}..HEAD")"
-  bodies="$(git log --format=%b "${last_stable_tag}..HEAD")"
+  range="${last_stable_tag}..HEAD"
+  subjects="$(git log --format=%s "$range")"
+  bodies="$(git log --format=%b "$range")"
 fi
 
 
