@@ -1,4 +1,3 @@
-import { Browser } from '@wailsio/runtime';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -39,25 +38,7 @@ export function Settings({ onTabChange }: { onTabChange?: (tab: string) => void 
                         {t(`settings.tabs.${key}`)}
                     </button>
                 ))}
-                <div className={styles.supportLinks}>
-                    <span className={styles.supportText}>{t('settings.support')}</span>
-                    <button
-                        className={styles.supportLink}
-                        onClick={() => void Browser.OpenURL('https://ko-fi.com/enubia')}
-                        style={{ background: 'rgba(255, 99, 51, 0.15)', color: '#ff6333' }}
-                    >
-                        Ko-fi
-                    </button>
-                    <button
-                        className={styles.supportLink}
-                        onClick={() =>
-                            void Browser.OpenURL('https://www.paypal.com/donate/?hosted_button_id=JMYLMVGSKXXEW')
-                        }
-                        style={{ background: 'rgba(0, 155, 222, 0.15)', color: '#009bde' }}
-                    >
-                        PayPal
-                    </button>
-                </div>
+
             </nav>
             <div className={styles.content}>
                 {activeTab === 'general' && <GeneralSettings />}
