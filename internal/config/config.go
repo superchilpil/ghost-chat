@@ -48,6 +48,7 @@ type TwitchConfig struct {
 type YouTubeConfig struct {
 	ChannelID     string   `json:"channel_id"`
 	VideoURL      string   `json:"video_url"`
+	APIKey        string   `json:"api_key"`
 	Fade          bool     `json:"fade"`
 	FadeTimeout   int      `json:"fade_timeout"`
 	UserBlacklist []string `json:"user_blacklist"`
