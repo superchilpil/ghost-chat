@@ -28,6 +28,7 @@ function App() {
     const loaded = useConfigStore((s) => s.loaded);
     const language = useConfigStore((s) => s.config?.general?.language);
     const setConnected = useConnectionStore((s) => s.setConnected);
+    const setTransport = useConnectionStore((s) => s.setTransport);
     const seedAuth = useAuthStore((s) => s.seed);
     const setAuthPending = useAuthStore((s) => s.setPending);
     const setAuthConnected = useAuthStore((s) => s.setConnected);
@@ -61,8 +62,11 @@ function App() {
 
     useEffect(() => {
         const cancelConnected = Events.On('chat:connected', (ev) => {
-            const { platform } = ev.data as { platform: Platform };
+            const { platform, transport } = ev.data as { platform: Platform; transport?: string };
             setConnected(platform, true);
+            if (transport) {
+                setTransport(platform, transport);
+            }
         });
 
         const cancelDisconnected = Events.On('chat:disconnected', (ev) => {
@@ -74,7 +78,7 @@ function App() {
             cancelConnected();
             cancelDisconnected();
         };
-    }, [setConnected]);
+    }, [setConnected, setTransport]);
 
     useEffect(() => {
         void seedAuth();
