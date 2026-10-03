@@ -17,6 +17,11 @@ import (
 	"time"
 
 	"ghost-chat/internal/chat"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	ytproto "github.com/codigolandia/live-quest/youtube/proto"
 )
 
 const (
@@ -43,8 +48,9 @@ type MessageHandler func(chat.ChatMessage)
 type EventHandler func(event string, data any)
 
 type Client struct {
-	mu     sync.Mutex
-	cancel context.CancelFunc
+	mu      sync.Mutex
+	cancel  context.CancelFunc
+	apiKey  string
 
 	OnMessage MessageHandler
 	OnEvent   EventHandler
@@ -57,14 +63,20 @@ func NewClient(onMessage MessageHandler, onEvent EventHandler) *Client {
 	}
 }
 
+func (c *Client) SetAPIKey(apiKey string) {
+	c.mu.Lock()
+	c.apiKey = strings.TrimSpace(apiKey)
+	c.mu.Unlock()
+}
+
 func (c *Client) Connect(input string) error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if c.cancel != nil {
 		c.cancel()
 		c.cancel = nil
 	}
+	apiKey := c.apiKey
+	c.mu.Unlock()
 
 	videoURL, err := ResolveVideoURL(input)
 	if err != nil {
@@ -73,20 +85,238 @@ func (c *Client) Connect(input string) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	if apiKey != "" {
+		chatID, err := fetchLiveChatID(ctx, videoURL, apiKey)
+		if err == nil && chatID != "" {
+			c.mu.Lock()
+			c.cancel = cancel
+			c.mu.Unlock()
+
+			c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "streamList"})
+			go c.streamLoop(ctx, chatID, apiKey)
+			return nil
+		}
+	}
+
+	// Preserve the existing public/unauthenticated transport as a fallback.
 	continuation, cfg, err := fetchInitialData(ctx, videoURL)
 	if err != nil {
 		cancel()
 		return fmt.Errorf("failed to fetch initial data: %w", err)
 	}
 
+	c.mu.Lock()
 	c.cancel = cancel
+	c.mu.Unlock()
 
-	c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube)})
-
+	c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube"})
 	go c.pollLoop(ctx, videoURL, continuation, cfg)
 
 	return nil
 }
+
+func fetchLiveChatID(ctx context.Context, videoURL, apiKey string) (string, error) {
+	videoID := extractVideoID(videoURL)
+	if videoID == "" {
+		return "", fmt.Errorf("could not extract video ID")
+	}
+
+	endpoint := "https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=" + url.QueryEscape(videoID) + "&key=" + url.QueryEscape(apiKey)
+	body, err := doRequest(ctx, http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return "", err
+	}
+
+	var response struct {
+		Items []struct {
+			LiveStreamingDetails struct {
+				ActiveLiveChatID string `json:"activeLiveChatId"`
+			} `json:"liveStreamingDetails"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("decode live chat lookup: %w", err)
+	}
+	if len(response.Items) == 0 || response.Items[0].LiveStreamingDetails.ActiveLiveChatID == "" {
+		return "", fmt.Errorf("no active live chat found")
+	}
+	return response.Items[0].LiveStreamingDetails.ActiveLiveChatID, nil
+}
+
+func (c *Client) streamLoop(ctx context.Context, liveChatID, apiKey string) {
+	pageToken := ""
+	backoff := time.Second
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		err := c.streamOnce(ctx, liveChatID, apiKey, pageToken)
+		if err == nil {
+			backoff = time.Second
+			continue
+		}
+		if ctx.Err() != nil {
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(backoff):
+		}
+		backoff = min(backoff*2, maxBackoff)
+	}
+}
+
+func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken string) error {
+	conn, err := grpc.NewClient("dns:///youtube.googleapis.com:443",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return fmt.Errorf("create youtube grpc client: %w", err)
+	}
+	defer conn.Close()
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-goog-api-key", apiKey)
+	stub := ytproto.NewV3DataLiveChatMessageServiceClient(conn)
+
+	request := &ytproto.LiveChatMessageListRequest{
+		LiveChatId:      &liveChatID,
+		PageToken:       optionalString(pageToken),
+		Part:            []string{"id", "snippet", "authorDetails"},
+		ProfileImageSize: optionalUint32(88),
+	}
+
+	stream, err := stub.StreamList(ctx, request)
+	if err != nil {
+		return fmt.Errorf("start youtube stream: %w", err)
+	}
+
+	for {
+		response, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+
+		for _, item := range response.GetItems() {
+			if msg := convertStreamMessage(item); msg != nil {
+				c.OnMessage(*msg)
+			}
+		}
+
+		if next := response.GetNextPageToken(); next != "" {
+			// Reopen with the continuation token after the server closes this
+			// streaming page. This mirrors Google's documented streaming flow.
+			return streamPage(ctx, liveChatID, apiKey, next, c.OnMessage)
+		}
+	}
+}
+
+func streamPage(ctx context.Context, liveChatID, apiKey, pageToken string, onMessage MessageHandler) error {
+	conn, err := grpc.NewClient("dns:///youtube.googleapis.com:443", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-goog-api-key", apiKey)
+	stub := ytproto.NewV3DataLiveChatMessageServiceClient(conn)
+	request := &ytproto.LiveChatMessageListRequest{
+		LiveChatId:       &liveChatID,
+		PageToken:        &pageToken,
+		Part:             []string{"id", "snippet", "authorDetails"},
+		ProfileImageSize: optionalUint32(88),
+	}
+	stream, err := stub.StreamList(ctx, request)
+	if err != nil {
+		return err
+	}
+	for {
+		response, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		for _, item := range response.GetItems() {
+			if msg := convertStreamMessage(item); msg != nil {
+				onMessage(*msg)
+			}
+		}
+	}
+}
+
+func convertStreamMessage(item *ytproto.LiveChatMessage) *chat.ChatMessage {
+	if item == nil || item.GetSnippet() == nil {
+		return nil
+	}
+	snippet := item.GetSnippet()
+	text := snippet.GetDisplayMessage()
+	if details := snippet.GetTextMessageDetails(); details != nil && details.GetMessageText() != "" {
+		text = details.GetMessageText()
+	}
+	if text == "" && snippet.GetHasDisplayContent() {
+		return nil
+	}
+
+	author := item.GetAuthorDetails()
+	msg := &chat.ChatMessage{
+		ID:       item.GetId(),
+		Platform: chat.PlatformYouTube,
+		Username: author.GetDisplayName(),
+		Text:     text,
+		Avatar:   author.GetProfileImageUrl(),
+		Tags:     map[string]string{},
+		EventData: map[string]string{},
+	}
+	if published := snippet.GetPublishedAt(); published != "" {
+		if ts, err := time.Parse(time.RFC3339Nano, published); err == nil {
+			msg.Timestamp = ts
+		}
+	}
+	if msg.Timestamp.IsZero() {
+		msg.Timestamp = time.Now()
+	}
+	if author.GetIsChatOwner() {
+		msg.Badges = append(msg.Badges, chat.Badge{Name: "owner", Version: "1", URL: ""})
+	}
+	if author.GetIsChatModerator() {
+		msg.Badges = append(msg.Badges, chat.Badge{Name: "moderator", Version: "1", URL: ""})
+	}
+	if author.GetIsChatSponsor() {
+		msg.Badges = append(msg.Badges, chat.Badge{Name: "member", Version: "1", URL: ""})
+	}
+	if details := snippet.GetSuperChatDetails(); details != nil {
+		msg.SuperChat = &chat.SuperChatDetails{
+			Amount: details.GetAmountDisplayString(),
+			BodyColor: "",
+			HeaderColor: "",
+		}
+		msg.EventType = "superChat"
+	}
+	if snippet.GetType() == ytproto.LiveChatMessageSnippet_TypeWrapper_MEMBER_MILESTONE_CHAT_EVENT ||
+		snippet.GetType() == ytproto.LiveChatMessageSnippet_TypeWrapper_NEW_SPONSOR_EVENT ||
+		snippet.GetType() == ytproto.LiveChatMessageSnippet_TypeWrapper_MEMBERSHIP_GIFTING_EVENT ||
+		snippet.GetType() == ytproto.LiveChatMessageSnippet_TypeWrapper_GIFT_MEMBERSHIP_RECEIVED_EVENT {
+		msg.MembershipEvent = true
+		if msg.EventType == "" {
+			msg.EventType = "membership"
+		}
+	}
+	return msg
+}
+
+func optionalString(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
+}
+
+func optionalUint32(v uint32) *uint32 { return &v }
+
 
 func (c *Client) Disconnect() {
 	c.mu.Lock()
