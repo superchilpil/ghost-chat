@@ -240,8 +240,12 @@ export function Chat() {
                     </svg>
                 </button>
                 {youtubeConnected && youtubeTransport && (
-                    <span className={styles.transport} title="YouTube chat transport">
-                        YouTube: {youtubeTransport === 'streamList' ? 'StreamList' : 'Innertube fallback'}
+                    <span className={styles.transport} title={youtubeTransport}>
+                        YouTube: {youtubeTransport === 'streamList'
+                            ? 'StreamList'
+                            : youtubeTransport.startsWith('innertube:')
+                              ? `Innertube fallback — ${youtubeTransport.slice('innertube:'.length)}`
+                              : 'Innertube fallback'}
                     </span>
                 )}
                 {!connected && <span className={styles.disconnected}>{t('chat.disconnected')}</span>}
