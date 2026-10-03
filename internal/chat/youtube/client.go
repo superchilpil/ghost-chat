@@ -109,11 +109,14 @@ func (c *Client) Connect(input string) error {
 		// diagnosed without exposing the API key itself.
 		if err != nil {
 			logf("StreamList unavailable: %v; falling back to Innertube", err)
+			c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": err.Error()})
 		} else {
 			logf("StreamList unavailable: no active live chat ID; falling back to Innertube")
+			c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": "no active live chat ID"})
 		}
 	} else {
 		logf("no YouTube Data API key in this build; using Innertube fallback")
+		c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": "no YouTube Data API key in this build"})
 	}
 
 	// Preserve the existing public/unauthenticated transport as a fallback.
