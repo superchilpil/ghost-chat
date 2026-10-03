@@ -60,6 +60,22 @@ export function Chat() {
 
             setMessages((prev) => {
                 const next = [...prev, msg];
+
+                // YouTube can deliver a batch of existing chat messages in an
+                // order that differs from the live message order. Keep the
+                // displayed history chronological so older messages remain
+                // above newer messages.
+                next.sort((a, b) => {
+                    const aTime = Date.parse(a.timestamp);
+                    const bTime = Date.parse(b.timestamp);
+
+                    if (Number.isNaN(aTime) || Number.isNaN(bTime)) {
+                        return 0;
+                    }
+
+                    return aTime - bTime;
+                });
+
                 if (next.length > MAX_MESSAGES) {
                     return next.slice(next.length - MAX_MESSAGES);
                 }
