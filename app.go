@@ -329,7 +329,11 @@ func (a *App) connect(platform chat.Platform, input string, automatic bool) erro
 	case chat.PlatformKick:
 		a.setKickChannel(input)
 	case chat.PlatformYouTube:
-		a.setYouTubeInput(input)
+		// Automatic live detection passes the current broadcast URL here.
+		// Never persist that temporary URL over the user's configured channel.
+		if !automatic {
+			a.setYouTubeInput(input)
+		}
 	}
 
 	return nil
