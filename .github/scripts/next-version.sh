@@ -31,17 +31,25 @@ if [ -n "$override" ]; then
   exit 0
 fi
 
-last_stable="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+# Accept both v1.2.3 and 1.2.3 tags. Manual release overrides have historically
+# used the no-v prefix, so automatic versioning must recognize both forms.
+last_stable_tag="$(
+  git tag --list |
+    grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' |
+    sort -V |
+    tail -n 1 || true
+)
 
-if [ -z "$last_stable" ]; then
-  # This repository may not have a release tag yet. Start automatic
-  # versioning at v0.0.0 so the first release becomes v0.0.1.
-  last_stable="v0.0.0"
+if [ -z "$last_stable_tag" ]; then
+  # No release tag yet: start at 0.0.0 so the first automatic release is 0.0.1.
+  last_stable_tag="0.0.0"
+  last_stable="0.0.0"
   subjects="$(git log --format=%s)"
   bodies="$(git log --format=%b)"
 else
-  subjects="$(git log --format=%s "${last_stable}..HEAD")"
-  bodies="$(git log --format=%b "${last_stable}..HEAD")"
+  last_stable="$last_stable_tag"
+  subjects="$(git log --format=%s "${last_stable_tag}..HEAD")"
+  bodies="$(git log --format=%b "${last_stable_tag}..HEAD")"
 fi
 
 
@@ -75,7 +83,25 @@ case "$bump" in
     ;;
 esac
 
-next="v${major}.${minor}.${patch}"
+# Treat the numeric components as single decimal digits. Carry after 9:
+#   1.0.9 -> 1.1.0
+#   1.9.9 -> 2.0.0
+if [ "$patch" -gt 9 ]; then
+  minor=$((minor + patch / 10))
+  patch=$((patch % 10))
+fi
+
+if [ "$minor" -gt 9 ]; then
+  major=$((major + minor / 10))
+  minor=$((minor % 10))
+fi
+
+prefix=""
+if [[ "$last_stable_tag" == v* ]]; then
+  prefix="v"
+fi
+
+next="${prefix}${major}.${minor}.${patch}"
 
 if [ "$rc" = true ]; then
   last_rc="$(git tag --list "${next}-rc.*" | sed "s/.*-rc\.//" | sort -n | tail -n 1)"
