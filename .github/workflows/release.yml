@@ -125,6 +125,13 @@ jobs:
           VERSION: ${{ needs.determine-version.outputs.version }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
 
+      - name: Install NSIS
+        shell: powershell
+        run: |
+          choco install nsis -y --no-progress
+          $env:PATH = "C:\\Program Files (x86)\\NSIS;" + $env:PATH
+          Add-Content -Path $env:GITHUB_PATH -Value "C:\\Program Files (x86)\\NSIS"
+
       - name: Build Windows NSIS installer
         run: wails3 task package FORMAT=nsis
         env:
