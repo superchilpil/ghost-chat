@@ -1,6 +1,6 @@
 import type { Platform } from '@bindings/ghost-chat/internal/chat/models.js';
 
-import { ExpandForSettings, ShrinkToChat } from '@bindings/ghost-chat/app.js';
+import { ExpandForSettings, GetConnectionStatus, ShrinkToChat } from '@bindings/ghost-chat/app.js';
 import { Events } from '@wailsio/runtime';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -72,6 +72,18 @@ function App() {
         const cancelDisconnected = Events.On('chat:disconnected', (ev) => {
             const { platform } = ev.data as { platform: Platform };
             setConnected(platform, false);
+        });
+
+        void GetConnectionStatus().then((statuses) => {
+            Object.entries(statuses as Record<string, { transport?: string }>).forEach(([platform, status]) => {
+                const p = platform as Platform;
+                setConnected(p, true);
+                if (status?.transport) {
+                    setTransport(p, status.transport);
+                }
+            });
+        }).catch(() => {
+            // Event-based updates remain the fallback if the status query is unavailable.
         });
 
         return () => {
