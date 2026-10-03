@@ -233,11 +233,44 @@ func (a *App) Connect(platform chat.Platform, input string) error {
 		return err
 	}
 
-	if platform == chat.PlatformTwitch {
+	switch platform {
+	case chat.PlatformTwitch:
 		a.setTwitchChannel(input)
+	case chat.PlatformKick:
+		a.setKickChannel(input)
+	case chat.PlatformYouTube:
+		a.setYouTubeInput(input)
 	}
 
 	return nil
+}
+
+func (a *App) setKickChannel(channel string) {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
+	if a.config.Kick.DefaultChannel == channel {
+		return
+	}
+
+	a.config.Kick.DefaultChannel = channel
+	if err := config.Save(a.config, a.configPath); err != nil {
+		fmt.Printf("failed to save Kick channel: %s\\n", err)
+	}
+}
+
+func (a *App) setYouTubeInput(input string) {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
+	if a.config.YouTube.VideoURL == input {
+		return
+	}
+
+	a.config.YouTube.VideoURL = input
+	if err := config.Save(a.config, a.configPath); err != nil {
+		fmt.Printf("failed to save YouTube input: %s\\n", err)
+	}
 }
 
 func (a *App) Disconnect(platform chat.Platform) error {
