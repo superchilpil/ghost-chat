@@ -177,9 +177,37 @@ jobs:
       - name: Generate updater manifests
         shell: bash
         run: |
+          set -euo pipefail
+
           VERSION="${VERSION_TAG#v}"
           DATE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
           INSTALLER="ghost-chat-Setup-${VERSION}.exe"
+
+          echo "Downloaded release artifacts:"
+          find artifacts -maxdepth 3 -type f -print
+
+          # Normalize artifact layout so release assets and manifests always use
+          # the expected root-level filenames, regardless of download-artifact
+          # directory layout.
+          INSTALLER_PATH="$(find artifacts -type f -name "${INSTALLER}" -print -quit)"
+          if [ -z "${INSTALLER_PATH}" ]; then
+            echo "ERROR: Could not find ${INSTALLER} in downloaded artifacts." >&2
+            exit 1
+          fi
+          if [ "${INSTALLER_PATH}" != "artifacts/${INSTALLER}" ]; then
+            mv "${INSTALLER_PATH}" "artifacts/${INSTALLER}"
+          fi
+
+          PORTABLE_PATH="$(find artifacts -type f -name "ghost-chat.exe" -print -quit)"
+          if [ -n "${PORTABLE_PATH}" ] && [ "${PORTABLE_PATH}" != "artifacts/ghost-chat.exe" ]; then
+            mv "${PORTABLE_PATH}" "artifacts/ghost-chat.exe"
+          fi
+
+          MAC_PATH="$(find artifacts -type f -name "ghost-chat-macos.zip" -print -quit)"
+          if [ -n "${MAC_PATH}" ] && [ "${MAC_PATH}" != "artifacts/ghost-chat-macos.zip" ]; then
+            mv "${MAC_PATH}" "artifacts/ghost-chat-macos.zip"
+          fi
+
           INSTALLER_SHA512="$(sha512sum "artifacts/${INSTALLER}" | awk '{print $1}')"
           INSTALLER_SIZE="$(stat -c%s "artifacts/${INSTALLER}")"
 
