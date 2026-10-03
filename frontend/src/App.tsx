@@ -48,6 +48,18 @@ function App() {
     }, [load]);
 
     useEffect(() => {
+        const cancelAutoConnected = Events.On('chat:auto-connected', () => {
+            setSettingsOpen(false);
+            void ShrinkToChat();
+            window.location.hash = '#/chat';
+        });
+
+        return () => {
+            cancelAutoConnected();
+        };
+    }, []);
+
+    useEffect(() => {
         const cancelConnected = Events.On('chat:connected', (ev) => {
             const { platform } = ev.data as { platform: Platform };
             setConnected(platform, true);
