@@ -19,7 +19,8 @@ import (
 	"ghost-chat/internal/chat"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
+	"crypto/tls"
 	"google.golang.org/grpc/metadata"
 	ytproto "github.com/codigolandia/live-quest/youtube/proto"
 )
@@ -154,8 +155,11 @@ func (c *Client) streamLoop(ctx context.Context, liveChatID, apiKey string) {
 		default:
 		}
 
-		err := c.streamOnce(ctx, liveChatID, apiKey, pageToken)
+		nextToken, err := c.streamOnce(ctx, liveChatID, apiKey, pageToken)
 		if err == nil {
+			if nextToken != "" {
+				pageToken = nextToken
+			}
 			backoff = time.Second
 			continue
 		}
@@ -172,12 +176,15 @@ func (c *Client) streamLoop(ctx context.Context, liveChatID, apiKey string) {
 	}
 }
 
-func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken string) error {
+func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken string) (string, error) {
 	conn, err := grpc.NewClient("dns:///youtube.googleapis.com:443",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: "youtube.googleapis.com",
+		})),
 	)
 	if err != nil {
-		return fmt.Errorf("create youtube grpc client: %w", err)
+		return pageToken, fmt.Errorf("create youtube grpc client: %w", err)
 	}
 	defer conn.Close()
 
@@ -185,21 +192,26 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 	stub := ytproto.NewV3DataLiveChatMessageServiceClient(conn)
 
 	request := &ytproto.LiveChatMessageListRequest{
-		LiveChatId:      &liveChatID,
-		PageToken:       optionalString(pageToken),
-		Part:            []string{"id", "snippet", "authorDetails"},
+		LiveChatId:       &liveChatID,
+		PageToken:        optionalString(pageToken),
+		Part:             []string{"id", "snippet", "authorDetails"},
 		ProfileImageSize: optionalUint32(88),
 	}
 
 	stream, err := stub.StreamList(ctx, request)
 	if err != nil {
-		return fmt.Errorf("start youtube stream: %w", err)
+		return pageToken, fmt.Errorf("start youtube stream: %w", err)
 	}
 
+	lastToken := pageToken
 	for {
 		response, err := stream.Recv()
 		if err != nil {
-			return err
+			return lastToken, err
+		}
+
+		if next := response.GetNextPageToken(); next != "" {
+			lastToken = next
 		}
 
 		for _, item := range response.GetItems() {
@@ -208,45 +220,12 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 			}
 		}
 
-		if next := response.GetNextPageToken(); next != "" {
-			// Reopen with the continuation token after the server closes this
-			// streaming page. This mirrors Google's documented streaming flow.
-			return streamPage(ctx, liveChatID, apiKey, next, c.OnMessage)
+		if response.GetOfflineAt() != "" {
+			return lastToken, fmt.Errorf("youtube live chat ended")
 		}
 	}
 }
 
-func streamPage(ctx context.Context, liveChatID, apiKey, pageToken string, onMessage MessageHandler) error {
-	conn, err := grpc.NewClient("dns:///youtube.googleapis.com:443", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-goog-api-key", apiKey)
-	stub := ytproto.NewV3DataLiveChatMessageServiceClient(conn)
-	request := &ytproto.LiveChatMessageListRequest{
-		LiveChatId:       &liveChatID,
-		PageToken:        &pageToken,
-		Part:             []string{"id", "snippet", "authorDetails"},
-		ProfileImageSize: optionalUint32(88),
-	}
-	stream, err := stub.StreamList(ctx, request)
-	if err != nil {
-		return err
-	}
-	for {
-		response, err := stream.Recv()
-		if err != nil {
-			return err
-		}
-		for _, item := range response.GetItems() {
-			if msg := convertStreamMessage(item); msg != nil {
-				onMessage(*msg)
-			}
-		}
-	}
-}
 
 func convertStreamMessage(item *ytproto.LiveChatMessage) *chat.ChatMessage {
 	if item == nil || item.GetSnippet() == nil {
