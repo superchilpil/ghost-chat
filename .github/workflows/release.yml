@@ -145,6 +145,14 @@ jobs:
         env:
           VERSION_TAG: ${{ needs.determine-version.outputs.version }}
 
+      - name: Verify Windows release assets
+        shell: powershell
+        run: |
+          if (-not (Test-Path 'bin/ghost-chat.exe')) { throw 'Missing portable ghost-chat.exe' }
+          $installer = Get-ChildItem 'bin/ghost-chat-Setup-*.exe' -File
+          if (-not $installer) { throw 'Missing Windows NSIS installer' }
+          Write-Host "Installer: $($installer.FullName)"
+
       - uses: actions/upload-artifact@v7
         with:
           name: ghost-chat-windows
