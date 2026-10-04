@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	pollInterval = 15 * time.Second
+	defaultPollInterval = 15 * time.Second
 	browserUA    = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
 
@@ -35,8 +35,11 @@ type kickChannelResponse struct {
 	} `json:"livestream"`
 }
 
-func PollInterval() time.Duration {
-	return pollInterval
+func PollInterval(seconds int) time.Duration {
+	if seconds <= 0 {
+		return defaultPollInterval
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 // CheckTwitch uses Helix when a Twitch access token is available. Without one,
