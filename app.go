@@ -428,7 +428,7 @@ func (a *App) startLiveMonitor() {
 	a.liveMonitorCancel = cancel
 
 	go func() {
-		ticker := time.NewTicker(live.PollInterval())
+		ticker := time.NewTicker(live.PollInterval(a.livePollInterval()))
 		defer ticker.Stop()
 
 		a.pollLivePlatforms(ctx)
@@ -441,6 +441,20 @@ func (a *App) startLiveMonitor() {
 			}
 		}
 	}()
+}
+
+func (a *App) livePollInterval() int {
+	a.configMu.Lock()
+	seconds := a.config.General.LivePollInterval
+	a.configMu.Unlock()
+
+	if seconds < 5 {
+		return 15
+	}
+	if seconds > 300 {
+		return 300
+	}
+	return seconds
 }
 
 func (a *App) pollLivePlatforms(ctx context.Context) {
