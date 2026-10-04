@@ -14,10 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/sys/windows"
 )
-
-const updateHelperArg = "--ghost-chat-apply-update"
 
 func DownloadAndInstall(info *UpdateInfo) error {
 	if info == nil || strings.TrimSpace(info.InstallerURL) == "" {
@@ -53,17 +50,27 @@ func DownloadAndInstall(info *UpdateInfo) error {
 		return fmt.Errorf("failed to finalize update download: %w", err)
 	}
 
-	// Hand the installer off to a second copy of Ghost Chat. That helper waits
-	// for this process to terminate before launching NSIS, guaranteeing that
-	// the running executable is no longer locked when the installer replaces it.
-	executable, err := os.Executable()
-	if err != nil {
-		os.Remove(installerPath)
-		return fmt.Errorf("failed to locate Ghost Chat executable: %w", err)
-	}
-
+	// Use a separate Windows process as the handoff. It waits for the current
+	// Ghost Chat process to disappear and only then launches NSIS. This avoids
+	// both the timing race and keeping the Ghost Chat executable locked.
 	pid := strconv.Itoa(os.Getpid())
-	cmd := exec.Command(executable, updateHelperArg, installerPath, pid)
+	psInstallerPath := strings.ReplaceAll(installerPath, "'", "''")
+	script := fmt.Sprintf(
+		"$p=Get-Process -Id %s -ErrorAction SilentlyContinue; if ($p) { Wait-Process -Id %s }; Start-Process -FilePath '%s'",
+		pid, pid, psInstallerPath,
+	)
+
+	cmd := exec.Command(
+		"powershell.exe",
+		"-NoProfile",
+		"-NonInteractive",
+		"-WindowStyle",
+		"Hidden",
+		"-ExecutionPolicy",
+		"Bypass",
+		"-Command",
+		script,
+	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	if err := cmd.Start(); err != nil {
@@ -72,40 +79,4 @@ func DownloadAndInstall(info *UpdateInfo) error {
 	}
 
 	return nil
-}
-
-// HandleUpdateHelper checks for the private updater handoff command used by
-// DownloadAndInstall. It returns true when the process was an update helper
-// and should not start the normal Ghost Chat application.
-func HandleUpdateHelper(args []string) (bool, error) {
-	if len(args) != 4 || args[1] != updateHelperArg {
-		return false, nil
-	}
-
-	installerPath := args[2]
-	pid, err := strconv.ParseUint(args[3], 10, 32)
-	if err != nil {
-		return true, fmt.Errorf("invalid Ghost Chat process ID: %w", err)
-	}
-
-	process, err := windows.OpenProcess(windows.SYNCHRONIZE, false, uint32(pid))
-	if err == nil {
-		defer windows.CloseHandle(process)
-
-		if _, err = windows.WaitForSingleObject(process, windows.INFINITE); err != nil {
-			return true, fmt.Errorf("failed waiting for Ghost Chat to exit: %w", err)
-		}
-	} else if err != windows.ERROR_INVALID_PARAMETER {
-		// If the original process is still present but cannot be opened, do not
-		// risk launching the installer while it may still be holding the EXE.
-		return true, fmt.Errorf("failed to open Ghost Chat process: %w", err)
-	}
-
-	cmd := exec.Command(installerPath)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: false}
-	if err := cmd.Start(); err != nil {
-		return true, fmt.Errorf("failed to launch update installer: %w", err)
-	}
-
-	return true, nil
 }
