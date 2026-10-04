@@ -60,7 +60,8 @@ This fork adds a background/live-stream workflow and other improvements:
 - **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
 - **Windows prebuilt release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat.
 - **Automated builds** - The repository includes Windows build automation and GitHub Actions release packaging.
-- **Persistent settings** - Configuration, window state, Auto Connect settings, themes, and other preferences are saved between launches.
+- **Persistent settings** - Configuration, window state, Auto Connect settings, themes, chat log settings, and other preferences are saved between launches.
+- **Configurable chat logs** - Optionally save all connected Twitch, YouTube, and Kick chat into one readable session transcript in a user-selected folder. Logs include the stream title when available, start/end times, service prefixes (`Y`, `T`, `K`), and emoji descriptors such as `:thumbs up:`. Messages are archived when received and remain in the log even if they are later deleted by a moderator.
 
 ## Documentation and support
 
