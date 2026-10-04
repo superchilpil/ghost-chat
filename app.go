@@ -598,6 +598,29 @@ func (a *App) handleAutoLiveEnded() {
 	a.window.Hide()
 }
 
+func (a *App) InstallUpdate() error {
+	info, err := updater.CheckForUpdate(a.version)
+	if err != nil {
+		return err
+	}
+	if info == nil || info.InstallerURL == "" {
+		return fmt.Errorf("automatic update is only available for installed Windows builds")
+	}
+
+	if err := updater.DownloadAndInstall(info); err != nil {
+		return err
+	}
+
+	// Give the installer a moment to start, then release the running executable
+	// so NSIS can replace it with the new version.
+	go func() {
+		time.Sleep(750 * time.Millisecond)
+		os.Exit(0)
+	}()
+
+	return nil
+}
+
 func (a *App) ResolveYouTubeVideo(input string) (string, error) {
 	return youtube.ResolveVideoURL(input)
 }
