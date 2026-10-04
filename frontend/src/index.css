@@ -157,6 +157,29 @@ button {
     gap: 6px;
 }
 
+.chat-log-location-input {
+    flex: 1;
+    min-width: 0;
+    width: auto !important;
+    background: var(--color-bg-raised) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border-strong) !important;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 8px 10px;
+    text-overflow: ellipsis;
+}
+
+.chat-log-location-input:read-only {
+    cursor: default;
+}
+
+.chat-log-location-input::selection {
+    background: var(--color-accent-muted);
+    color: var(--color-text);
+}
+
+
 .field-error {
     font-size: 11px;
     color: var(--color-danger);
