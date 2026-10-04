@@ -12,6 +12,7 @@ import (
 	"ghost-chat/internal/buildconfig"
 	ghHotkey "ghost-chat/internal/hotkey"
 	"ghost-chat/internal/live"
+	"ghost-chat/internal/chatlog"
 	"ghost-chat/internal/updater"
 	"os"
 	"strings"
@@ -49,6 +50,7 @@ type App struct {
 	preExpandWidth   int
 	vanished         bool
 	lastX, lastY     int
+	chatLog          *chatlog.Logger
 	lastW, lastH     int
 }
 
@@ -67,7 +69,13 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		lastH:      cfg.WindowState.Height,
 	}
 
+	a.chatLog = chatlog.NewLogger(
+		func() bool { a.configMu.Lock(); defer a.configMu.Unlock(); return a.config.General.ChatLogEnabled },
+		func() string { a.configMu.Lock(); defer a.configMu.Unlock(); return a.config.General.ChatLogDirectory },
+	)
+
 	onMessage := func(msg chat.ChatMessage) {
+		a.chatLog.Message(msg)
 		if a.emit != nil {
 			a.emit("chat:message", msg)
 		}
@@ -132,6 +140,7 @@ func (a *App) wireClients() {
 		} else if event == "chat:disconnected" {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
+					a.chatLog.Disconnect(chat.Platform(platform))
 					a.transportMu.Lock()
 					delete(a.connectionTransport, chat.Platform(platform))
 					a.transportMu.Unlock()
@@ -231,6 +240,9 @@ func (a *App) ServiceShutdown() error {
 
 	if a.liveMonitorCancel != nil {
 		a.liveMonitorCancel()
+	}
+	if a.chatLog != nil {
+		a.chatLog.Close()
 	}
 
 	go func() {
@@ -354,6 +366,9 @@ func (a *App) connect(platform chat.Platform, input string, automatic bool) erro
 			a.setYouTubeInput(input)
 		}
 	}
+
+	a.chatLog.Connect(platform, "")
+	go a.resolveChatLogTitle(platform, input)
 
 	return nil
 }
@@ -596,6 +611,48 @@ func (a *App) handleAutoLiveEnded() {
 	// The stream that triggered automatic mode has ended. Return Ghost Chat
 	// to the tray so it is ready for the next configured live stream.
 	a.window.Hide()
+}
+
+
+func (a *App) resolveChatLogTitle(platform chat.Platform, input string) {
+\tif a.chatLog == nil {
+\t\treturn
+\t}
+\ta.configMu.Lock()
+\tapiKey := cfgYouTubeAPIKey(a.config)
+\ta.configMu.Unlock()
+
+\ttoken := ""
+\tif platform == chat.PlatformTwitch && a.auth.LoggedIn() {
+\t\tif t, err := a.auth.AccessToken(context.Background()); err == nil {
+\t\t\ttoken = t
+\t\t}
+\t}
+
+\ttitle, err := live.StreamTitle(context.Background(), platform, input, token, apiKey)
+\tif err == nil && strings.TrimSpace(title) != "" {
+\t\ta.chatLog.SetStreamTitle(title)
+\t}
+}
+
+func (a *App) SelectChatLogDirectory() (string, error) {
+\tinitial := ""
+\ta.configMu.Lock()
+\tinitial = a.config.General.ChatLogDirectory
+\ta.configMu.Unlock()
+
+\tdialog := a.app.Dialog.OpenFile().
+\t\tSetTitle("Select Chat Log Folder").
+\t\tCanChooseDirectories(true).
+\t\tCanChooseFiles(false)
+\tif strings.TrimSpace(initial) != "" {
+\t\tdialog.SetDirectory(initial)
+\t}
+\tpath, err := dialog.PromptForSingleSelection()
+\tif err != nil || path == "" {
+\t\treturn "", err
+\t}
+\treturn path, nil
 }
 
 func (a *App) InstallUpdate() error {
