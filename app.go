@@ -9,6 +9,7 @@ import (
 	"ghost-chat/internal/chat/twitch"
 	"ghost-chat/internal/chat/youtube"
 	"ghost-chat/internal/config"
+	"ghost-chat/internal/buildconfig"
 	ghHotkey "ghost-chat/internal/hotkey"
 	"ghost-chat/internal/live"
 	"ghost-chat/internal/updater"
@@ -103,10 +104,14 @@ func makeHandlers(emit func(string, any)) (func(chat.ChatMessage), func(string, 
 }
 
 func cfgYouTubeAPIKey(cfg *config.Config) string {
-	if cfg == nil {
-		return ""
+	if cfg != nil && strings.TrimSpace(cfg.YouTube.APIKey) != "" {
+		return strings.TrimSpace(cfg.YouTube.APIKey)
 	}
-	return cfg.YouTube.APIKey
+
+	// Release builds can embed the YouTube API key with -ldflags. The live
+	// monitor must use the same key as the YouTube chat client so automatic
+	// live detection works even when the user never enters an API key.
+	return strings.TrimSpace(buildconfig.YouTubeAPIKey)
 }
 
 func (a *App) wireClients() {
