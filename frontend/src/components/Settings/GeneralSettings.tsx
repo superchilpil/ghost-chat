@@ -96,8 +96,10 @@ export function GeneralSettings() {
                 <label className="field-label">{t('settings.general.chat_log_location')}</label>
                 <div className="field-row">
                     <input
+                        className="chat-log-location-input"
                         value={config?.general?.chat_log_directory ?? ''}
                         placeholder={t('settings.general.chat_log_placeholder')}
+                        title={config?.general?.chat_log_directory ?? ''}
                         readOnly
                     />
                     <button
