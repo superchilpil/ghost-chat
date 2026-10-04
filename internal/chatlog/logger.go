@@ -23,6 +23,7 @@ type Logger struct {
 	services    map[chat.Platform]bool
 	active      map[chat.Platform]bool
 	streamTitle string
+	headerWritten bool
 }
 
 func NewLogger(enabled func() bool, directory func() string) *Logger {
@@ -42,6 +43,7 @@ func (l *Logger) Connect(platform chat.Platform, streamTitle string) {
 		l.services = make(map[chat.Platform]bool)
 		l.active = make(map[chat.Platform]bool)
 		l.streamTitle = strings.TrimSpace(streamTitle)
+		l.headerWritten = false
 		if err := l.openLocked(); err != nil {
 			fmt.Printf("chat log: failed to open log: %v\n", err)
 			return
@@ -92,6 +94,7 @@ func (l *Logger) Disconnect(platform chat.Platform) {
 	l.services = make(map[chat.Platform]bool)
 	l.active = make(map[chat.Platform]bool)
 	l.streamTitle = ""
+	l.headerWritten = false
 }
 
 func (l *Logger) Message(msg chat.ChatMessage) {
@@ -118,6 +121,14 @@ func (l *Logger) Message(msg chat.ChatMessage) {
 	if stamp.IsZero() {
 		stamp = time.Now()
 	}
+	if !l.headerWritten {
+		if _, err := fmt.Fprintf(l.file, "============================================================\nGhost Chat - Chat Log\nStream: %s\nStarted: %s\n\nMessages are recorded when received by Ghost Chat.\nLater moderation/deletion events do not remove messages from this archive.\n============================================================\n\n", sanitizeHeaderText(l.streamTitle), l.start.Local().Format("2006-01-02 03:04:05 PM")); err != nil {
+			fmt.Printf("chat log: failed to write header: %v\n", err)
+			return
+		}
+		l.headerWritten = true
+	}
+
 	line := fmt.Sprintf("[%s] %s %s: %s\n", stamp.Local().Format("2006-01-02 15:04:05"), prefix, username, text)
 	if _, err := l.file.WriteString(line); err != nil {
 		fmt.Printf("chat log: failed to write message: %v\n", err)
@@ -225,6 +236,13 @@ func platformPrefix(platform chat.Platform) string {
 	default:
 		return "?"
 	}
+}
+
+func sanitizeHeaderText(value string) string {
+	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "\n", " ")
+	if value == "" { return "Unknown / unavailable" }
+	return value
 }
 
 func platformName(platform chat.Platform) string {
