@@ -103,6 +103,14 @@ func main() {
 	tray := app.SystemTray.New()
 	tray.SetTemplateIcon(trayIcon)
 	tray.SetTooltip("Ghost Chat " + version)
+	tray.OnClick(func() {
+		if win.IsVisible() {
+			win.Hide()
+		} else {
+			win.Show()
+			win.Focus()
+		}
+	})
 
 	menu := app.NewMenu()
 	menu.Add("Ghost Chat " + version).SetEnabled(false)
