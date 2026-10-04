@@ -52,7 +52,7 @@ jobs:
           fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Release version: \`$version\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release version: `$version`" >> "$GITHUB_STEP_SUMMARY"
 
   build-macos:
     needs: determine-version
@@ -195,9 +195,6 @@ jobs:
           echo "Downloaded release artifacts:"
           find artifacts -maxdepth 3 -type f -print
 
-          # Normalize artifact layout so release assets and manifests always use
-          # the expected root-level filenames, regardless of download-artifact
-          # directory layout.
           INSTALLER_PATH="$(find artifacts -type f -name "${INSTALLER}" -print -quit)"
           if [ -z "${INSTALLER_PATH}" ]; then
             echo "ERROR: Could not find ${INSTALLER} in downloaded artifacts." >&2
@@ -251,6 +248,46 @@ jobs:
           generate_release_notes: true
           append_body: true
           body: |
+            # Ghost Chat v1.0.0 — Full Release
+
+            **This is the full v1.0.0 release of this Ghost Chat fork. It is not a release candidate.**
+
+            This release marks the first full release of the fork's new automatic live-stream workflow and Windows-focused distribution improvements.
+
+            ## Changelog
+
+            ### Automatic live-stream workflow
+            - Automatic live detection for configured Twitch, YouTube, and Kick channels.
+            - Automatic chat connection when a configured stream goes live.
+            - Automatically brings Ghost Chat to the front and switches to the chat view.
+            - Automatically enables vanish/click-through mode when live.
+            - Automatically disconnects when the stream ends.
+            - Automatically returns Ghost Chat to the system tray after the stream ends.
+            - Per-platform Auto Connect controls.
+            - Channel changes require Auto Connect confirmation before monitoring resumes.
+            - Configurable live detection interval: 5 seconds through 5 minutes.
+            - Background monitoring continues while Ghost Chat is hidden in the tray.
+
+            ### YouTube improvements
+            - Low-latency Live Chat StreamList transport with Innertube fallback.
+            - StreamList message deduplication.
+            - Chronological chat message ordering.
+            - Connection diagnostics showing the active chat transport.
+            - Release builds can embed the YouTube API configuration.
+
+            ### Windows experience
+            - Windows system tray integration.
+            - Prebuilt Windows portable executable.
+            - Windows NSIS installer.
+            - Persistent configuration across launches and reinstalls.
+            - Automated Windows build and release packaging.
+            - Built-in update checking/release manifest support.
+
+            ### Documentation
+            - Updated README with fork-specific features.
+            - Added Windows installation instructions.
+            - Documented the YouTube API key requirement for users building their own copy.
+
             ## Downloads
 
             - **Windows installer:** [ghost-chat Setup](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat-Setup-${VERSION_TAG#v}.exe)
@@ -261,11 +298,15 @@ jobs:
 
             Ghost Chat stores its configuration in the Windows user configuration directory rather than inside the application install directory. The installer/uninstaller therefore leaves the configuration intact, allowing a reinstall to retain your settings.
 
+            ### Self-building
+
+            Users who build Ghost Chat themselves must provide their own **YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable. The public prebuilt release includes the release API configuration, so normal users do not need to configure an API key.
+
             ### Installation / Usage / Bug reporting
 
             A detailed description is available on our [wiki](https://github.com/Enubia/ghost-chat/wiki).
 
             ---
-          # Attach every normalized release artifact. Using a directory glob prevents the Windows NSIS installer from being omitted by filename expression handling.
+
           files: |
             artifacts/*
