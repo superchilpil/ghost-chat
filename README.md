@@ -26,25 +26,10 @@ Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 ## Screenshots
 
 <p align="center">
-  <img src="images/index.png" alt="Home screen" width="280" />
   <img src="images/chat.png" alt="Live chat" width="280" />
   <img src="images/transparent.png" alt="Vanish mode" width="280" />
 </p>
 
-<details>
-<summary>Settings</summary>
-<p align="center">
-  <img src="images/general.png" alt="General settings" width="45%" />
-  <img src="images/twitch.png" alt="Twitch settings" width="45%" />
-</p>
-<p align="center">
-  <img src="images/youtube.png" alt="YouTube settings" width="45%" />
-  <img src="images/kick.png" alt="Kick settings" width="45%" />
-</p>
-<p align="center">
-  <img src="images/themes.png" alt="Theme editor" width="90%" />
-</p>
-</details>
 
 ## Features
 
@@ -71,7 +56,6 @@ This fork adds a background/live-stream workflow and other improvements:
 - **Background operation** - Ghost Chat can remain hidden in the system tray while its configured channels are monitored in the background.
 - **Adjustable live detection** - Choose how often live status is checked: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes.
 - **YouTube low-latency chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support.
-- **Improved YouTube message handling** - Deduplicates StreamList messages and preserves chronological message ordering.
 - **Connection diagnostics** - Chat connection status can identify the transport being used, including StreamList or Innertube for YouTube.
 - **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
 - **Windows prebuilt release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat.
