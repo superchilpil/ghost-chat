@@ -62,6 +62,17 @@ This fork adds a background/live-stream workflow and other improvements:
 - **Automated builds** - The repository includes Windows build automation and GitHub Actions release packaging.
 - **Persistent settings** - Configuration, window state, Auto Connect settings, themes, and other preferences are saved between launches.
 
+## Documentation and support
+
+The fork's documentation is maintained here:
+
+- **Wiki:** https://github.com/superchilpil/ghost-chat/wiki
+- **Documentation source:** [docs/wiki](docs/wiki)
+- **Releases and updates:** https://github.com/superchilpil/ghost-chat/releases
+- **Bug reports:** https://github.com/superchilpil/ghost-chat/issues
+
+The original Enubia repository is retained only as the source of the original Ghost Chat project and for attribution. Fork-specific documentation, releases, updates, and support belong to this repository.
+
 ## Downloads
 
 For normal Windows users, use the latest release rather than building from source.
