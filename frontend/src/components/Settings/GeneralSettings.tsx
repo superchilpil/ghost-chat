@@ -103,9 +103,13 @@ export function GeneralSettings() {
                     <button
                         className="btn btn-ghost"
                         onClick={async () => {
-                            const path = await SelectChatLogDirectory();
-                            if (path) {
-                                void update({ general: { chat_log_directory: path } });
+                            try {
+                                const path = await SelectChatLogDirectory();
+                                if (path) {
+                                    await update({ general: { chat_log_directory: path } });
+                                }
+                            } catch (error) {
+                                console.error('Failed to select chat log directory:', error);
                             }
                         }}
                     >
