@@ -55,7 +55,7 @@ export function Home() {
         if (!isAutoEnabled(platform)) return 'Auto Connect';
         return getSavedInput(platform).trim() === getInput(platform).trim()
             ? 'Auto Connect Enabled'
-            : 'Update Auto Connect';
+            : 'Auto Connect';
     };
 
     const saveAutoConnect = async (platform: Platform) => {
@@ -65,7 +65,11 @@ export function Home() {
 
         const enabled = isAutoEnabled(platform);
         const sameSavedInput = input === getSavedInput(platform).trim();
-        const nextEnabled = enabled && sameSavedInput ? false : true;
+
+        // If Auto Connect is already enabled, clicking the button with the
+        // same saved channel disables it. A changed channel requires a new
+        // confirmation and enables Auto Connect for that new channel.
+        const nextEnabled = sameSavedInput ? !enabled : true;
 
         if (platform === Platform.PlatformTwitch) {
             await update({ twitch: { default_channel: input, auto_connect: nextEnabled } });
