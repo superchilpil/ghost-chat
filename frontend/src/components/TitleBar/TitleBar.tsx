@@ -17,13 +17,28 @@ export function TitleBar({ onSettingsToggle, settingsOpen, updateInfo }: TitleBa
     const { t } = useTranslation();
     const hotkeySet = useConfigStore((s) => !!s.config?.keybinds?.vanish?.keybind);
 
-    const handleUpdateClick = () => {
-        if (updateInfo?.installer_url) {
-            void InstallUpdate();
+    const [updating, setUpdating] = useState(false);
+
+    const handleUpdateClick = async () => {
+        if (!updateInfo || updating) {
             return;
         }
 
-        if (updateInfo?.url) {
+        if (updateInfo.installer_url) {
+            setUpdating(true);
+            try {
+                await InstallUpdate();
+                return;
+            } catch (error) {
+                console.error('Ghost Chat automatic update failed:', error);
+            } finally {
+                setUpdating(false);
+            }
+        }
+
+        // If automatic installation is unavailable or fails, always give the
+        // user a working path to the release instead of silently doing nothing.
+        if (updateInfo.url) {
             void Browser.OpenURL(updateInfo.url);
         }
     };
@@ -43,8 +58,9 @@ export function TitleBar({ onSettingsToggle, settingsOpen, updateInfo }: TitleBa
                         className={styles.updateBadge}
                         onClick={handleUpdateClick}
                         title={t('titlebar.update_available', { version: updateInfo.version })}
+                        disabled={updating}
                     >
-                        {t('titlebar.update_available', { version: updateInfo.version })}
+                        {updating ? 'Updating…' : t('titlebar.update_available', { version: updateInfo.version })}
                     </button>
                 )}
             </div>
