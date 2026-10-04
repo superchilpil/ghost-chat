@@ -48,26 +48,61 @@ Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 
 ## Features
 
+### Original Ghost Chat features
+
+These are the core features carried over from the original Ghost Chat project:
+
 - **Multi-platform chat** - Twitch IRC, YouTube Live Chat, and Kick in one overlay
-- **Automatic live detection** - Monitor your configured Twitch, YouTube, and Kick channels and automatically connect when a stream goes live
-- **Automatic disconnect** - Automatically disconnect from chats when the associated stream ends
-- **YouTube low-latency chat** - Uses YouTube Live Chat StreamList when an API key is available, with Innertube fallback support
 - **Vanish mode** - Toggle transparency and click-through with a global hotkey
-- **Custom themes** - Built-in themes (Default, Compact, Bubble) or create your own
-- **Emote support** - Native Twitch, BTTV, FFZ, 7TV, YouTube custom emoji, Kick emotes
-- **Badge rendering** - Twitch badges via GQL API, YouTube member/mod/owner badges
-- **Super Chat & Membership** - YouTube Super Chat and membership events with styling
-- **System tray** - Runs quietly in the tray with quick access to vanish, config, and quit
-- **i18n** - English and German, more languages welcome
-- **Fade messages** - Auto-fade with configurable timeout per platform
-- **Filtering** - Hide bots, commands, or specific users per platform
+- **Custom themes** - Built-in themes or create your own
+- **Emote support** - Twitch, BTTV, FFZ, 7TV, YouTube, and Kick emotes
+- **Badge rendering** - Platform-specific badges
+- **Super Chat & Membership** - YouTube Super Chat and membership events
+- **Fade messages** - Auto-fade with configurable timeout
+- **Filtering** - Hide bots, commands, or specific users
+- **i18n** - English and German, with more languages welcome
+
+### Features added in this fork
+
+This fork adds several features focused on making Ghost Chat work more like a background streaming companion:
+
+- **Automatic live detection** - Monitors configured Twitch, YouTube, and Kick channels and detects when they go live
+- **Automatic chat connection** - Automatically connects to a configured chat when its stream starts
+- **Automatic disconnect** - Disconnects from an automatically connected chat when the stream ends
+- **Per-platform Auto Connect** - Enable or disable automatic connection independently for Twitch, YouTube, and Kick
+- **Explicit Auto Connect confirmation** - Changing a configured channel requires pressing Auto Connect again to confirm the new channel before automatic connection is re-enabled
+- **Background/tray operation** - Ghost Chat can remain hidden in the system tray while continuing to monitor configured channels
+- **Bring to Front and Vanish When Live** - Automatically brings Ghost Chat out of the tray, opens the chat overlay, and enables click-through vanish mode when a configured stream goes live
+- **Return to Tray When Live Ends** - Automatically hides Ghost Chat again after an automatically detected stream ends
+- **Adjustable live detection polling** - Choose how often Ghost Chat checks for live status: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes
+- **YouTube low-latency StreamList chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support
+- **YouTube API key support for releases** - Release builds can include the API configuration needed for automatic YouTube live detection and StreamList chat without requiring the user to configure an API key manually
+- **Improved YouTube message handling** - Deduplicates StreamList messages and preserves chronological message ordering
+- **Connection diagnostics** - Chat connection status can identify the transport being used, including StreamList or Innertube for YouTube
+- **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting
+- **Windows installable release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat
+- **Automated Windows builds** - The repository includes Windows build automation and GitHub Actions release packaging
+- **Persistent settings** - Configuration, window state, Auto Connect settings, themes, and other preferences are saved between launches
 
 ## Downloads
 
+For normal Windows users, use the latest release rather than building from source.
+
 | Platform | Download |
 |----------|----------|
-| macOS (Universal) | [ghost-chat-macos.zip](https://github.com/superchilpil/ghost-chat/releases/latest) |
-| Windows | [ghost-chat.exe](https://github.com/superchilpil/ghost-chat/releases/latest) |
+| **Windows (recommended)** | [Latest Windows release](https://github.com/superchilpil/ghost-chat/releases/latest) |
+| macOS (Universal) | [Latest macOS release](https://github.com/superchilpil/ghost-chat/releases/latest) |
+
+### Windows installation
+
+1. Open the [latest release](https://github.com/superchilpil/ghost-chat/releases/latest).
+2. Download the Windows installer or `.exe` included with the release.
+3. Run it and launch Ghost Chat.
+4. Configure your Twitch, YouTube, and/or Kick channel on the Home screen.
+5. Enable **Auto Connect** for any platform you want Ghost Chat to monitor automatically.
+6. If desired, enable **Minimize to Tray** and **Bring to Front and Vanish When Live** in General Settings.
+
+No Git, Go, Node.js, pnpm, Wails, or manual dependency installation is required for the prebuilt Windows release.
 
 ## Development
 
