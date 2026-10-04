@@ -142,9 +142,16 @@ Ghost Chat uses i18next. To add a language:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Credits
+## Credits and attribution
 
-Ghost Chat was originally created by [Enubia](https://github.com/Enubia) and this project is based on the original [Ghost Chat](https://github.com/Enubia/ghost-chat). Original project credit remains with its creator.
+Ghost Chat was originally created by **Enubia**. This repository is a fork and continuation of the original project, and the original work remains credited to its creator.
+
+**Original work:** Enubia, *Ghost Chat* (2020), GitHub repository: https://github.com/Enubia/ghost-chat
+
+The original repository is the source of the core Ghost Chat application and its original features. This fork adds and maintains the changes documented under **Features added in this fork**, including the live-stream monitoring workflow, background operation, adjustable live detection, Windows system-tray integration, release automation, and updater behavior.
+
+Please give credit to the original project and its creator when redistributing, documenting, or referencing work derived from Ghost Chat. The repository also includes a `CITATION.cff` file with the original project listed as a software reference.
+
 
 <p align="center">
   <a href="https://github.com/enubia/ghost-chat/graphs/contributors">
