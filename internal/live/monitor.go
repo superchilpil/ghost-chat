@@ -204,10 +204,37 @@ func CheckKick(ctx context.Context, channel string) (bool, error) {
 	return body.Livestream != nil && body.Livestream.ID != 0, nil
 }
 
+func checkYouTubeVideoLive(ctx context.Context, videoURL, apiKey string) (bool, error) {
+	videoID := extractYouTubeVideoID(videoURL)
+	if videoID == "" { return false, fmt.Errorf("could not extract YouTube video ID") }
+
+	endpoint := "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" + url.QueryEscape(videoID) + "&key=" + url.QueryEscape(apiKey)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil { return false, err }
+	req.Header.Set("User-Agent", browserUA)
+	resp, err := httpClient.Do(req)
+	if err != nil { return false, err }
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK { return false, fmt.Errorf("YouTube live check returned HTTP %d", resp.StatusCode) }
+
+	var body struct {
+		Items []struct {
+			Snippet struct { LiveBroadcastContent string `json:"liveBroadcastContent"` } `json:"snippet"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 2<<20)).Decode(&body); err != nil { return false, err }
+	return len(body.Items) > 0 && body.Items[0].Snippet.LiveBroadcastContent == "live", nil
+}
+
+func extractYouTubeVideoID(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Path != "/watch" { return "" }
+	return u.Query().Get("v")
+}
 // CheckYouTube resolves the configured channel's /live page. ResolveVideoURL
 // already handles both channel IDs and @handles and returns an error when no
 // current live video can be found.
-func CheckYouTube(ctx context.Context, channel string, resolve func(string) (string, error)) (string, bool, error) {
+func CheckYouTube(ctx context.Context, channel, apiKey string, resolve func(string) (string, error)) (string, bool, error) {
 	channel = strings.TrimSpace(channel)
 	if channel == "" {
 		return "", false, nil
@@ -230,6 +257,19 @@ func CheckYouTube(ctx context.Context, channel string, resolve func(string) (str
 		if r.err != nil {
 			return "", false, nil
 		}
-		return r.url, r.url != "", nil
+		if r.url == "" {
+			return "", false, nil
+		}
+		if apiKey == "" {
+			return "", false, nil
+		}
+		live, err := checkYouTubeVideoLive(ctx, r.url, apiKey)
+		if err != nil {
+			return "", false, err
+		}
+		if !live {
+			return "", false, nil
+		}
+		return r.url, true, nil
 	}
 }
