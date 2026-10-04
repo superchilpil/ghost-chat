@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
+import { SelectChatLogDirectory } from '@bindings/ghost-chat/app.js';
+
 import { Toggle } from '@/components/Toggle';
 import { useConfigStore } from '@/stores/config';
 
@@ -75,6 +77,42 @@ export function GeneralSettings() {
                         </option>
                     ))}
                 </select>
+            </div>
+
+            <div className="field-section">
+                <label className="field-section-label">Chat Log</label>
+                <span className="field-hint">Save all connected service chat messages into one session log.</span>
+            </div>
+
+            <div className="field-row">
+                <label className="field-label">Enable Chat Log</label>
+                <Toggle
+                    checked={config?.general?.chat_log_enabled ?? false}
+                    onChange={(v) => void update({ general: { chat_log_enabled: v } })}
+                />
+            </div>
+
+            <div className="field">
+                <label className="field-label">Chat Log Location</label>
+                <div className="field-row">
+                    <input
+                        value={config?.general?.chat_log_directory ?? ''}
+                        placeholder="Choose a folder for chat logs"
+                        readOnly
+                    />
+                    <button
+                        className="btn btn-ghost"
+                        onClick={async () => {
+                            const path = await SelectChatLogDirectory();
+                            if (path) {
+                                void update({ general: { chat_log_directory: path } });
+                            }
+                        }}
+                    >
+                        Browse
+                    </button>
+                </div>
+                <span className="field-hint">Chat logs are only written when logging is enabled.</span>
             </div>
 
             <div className="field-row">
