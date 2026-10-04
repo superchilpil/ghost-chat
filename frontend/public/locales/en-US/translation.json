@@ -53,6 +53,8 @@
             "press_keys": "Press a key combination...",
             "not_set": "Not set",
             "show_waiting_message": "Show Waiting Message",
+            "minimize_to_tray": "Minimize to Tray",
+            "auto_show_on_live": "Bring to Front and Vanish When Live",
             "hotkey_hint": "Requires one of Ctrl, Alt, or Shift plus another key. E.g. Ctrl+Shift+V"
         },
         "platform": {
