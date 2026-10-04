@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -189,10 +188,11 @@ func (l *Logger) renameLocked() {
 
 func (l *Logger) filenameLocked() string {
 	services := make([]string, 0, len(l.services))
-	for platform := range l.services {
-		services = append(services, platformName(platform))
+	for _, platform := range []chat.Platform{chat.PlatformYouTube, chat.PlatformTwitch, chat.PlatformKick} {
+		if l.services[platform] {
+			services = append(services, platformName(platform))
+		}
 	}
-	sort.Strings(services)
 	servicePart := strings.Join(services, "-")
 	if servicePart == "" {
 		servicePart = "chat"
