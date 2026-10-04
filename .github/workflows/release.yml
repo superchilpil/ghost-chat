@@ -283,6 +283,12 @@ jobs:
             - Automated Windows build and release packaging.
             - Built-in update checking/release manifest support.
 
+            ### Automatic updater
+            - Installed Windows versions can download the new NSIS installer directly from the GitHub release.
+            - Ghost Chat closes itself after launching the installer so the update can replace the running application.
+            - Portable/standalone Windows builds continue to open the GitHub Releases/downloads page instead of downloading an installer.
+            - macOS continues to use the GitHub release/download page while macOS updater behavior remains untested.
+
             ### Documentation
             - Updated README with fork-specific features.
             - Added Windows installation instructions.
