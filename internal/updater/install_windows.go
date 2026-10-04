@@ -13,7 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
 )
 
 func DownloadAndInstall(info *UpdateInfo) error {
@@ -56,7 +55,7 @@ func DownloadAndInstall(info *UpdateInfo) error {
 	pid := strconv.Itoa(os.Getpid())
 	psInstallerPath := strings.ReplaceAll(installerPath, "'", "''")
 	script := fmt.Sprintf(
-		"$p=Get-Process -Id %s -ErrorAction SilentlyContinue; if ($p) { Wait-Process -Id %s }; Start-Process -FilePath '%s'",
+		"$p=Get-Process -Id %s -ErrorAction SilentlyContinue; if ($p) { Wait-Process -Id %s -ErrorAction SilentlyContinue }; Start-Process -FilePath '%s'",
 		pid, pid, psInstallerPath,
 	)
 
