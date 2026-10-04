@@ -654,22 +654,37 @@ func (a *App) resolveChatLogTitle(platform chat.Platform, input string) {
 }
 
 func (a *App) SelectChatLogDirectory() (string, error) {
-	initial := ""
+	if a.app == nil || a.window == nil {
+		return "", fmt.Errorf("Ghost Chat window is not ready")
+	}
+
 	a.configMu.Lock()
-	initial = a.config.General.ChatLogDirectory
+	initial := strings.TrimSpace(a.config.General.ChatLogDirectory)
 	a.configMu.Unlock()
 
 	dialog := a.app.Dialog.OpenFile().
 		SetTitle("Select Chat Log Folder").
 		CanChooseDirectories(true).
-		CanChooseFiles(false)
-	if strings.TrimSpace(initial) != "" {
-		dialog.SetDirectory(initial)
+		CanChooseFiles(false).
+		AttachToWindow(a.window)
+
+	// Only use the saved directory as the starting location when it still
+	// exists. This prevents a stale/deleted path from preventing the native
+	// picker from opening.
+	if initial != "" {
+		if info, err := os.Stat(initial); err == nil && info.IsDir() {
+			dialog.SetDirectory(initial)
+		}
 	}
+
 	path, err := dialog.PromptForSingleSelection()
-	if err != nil || path == "" {
-		return "", err
+	if err != nil {
+		return "", fmt.Errorf("failed to open chat log folder picker: %w", err)
 	}
+	if path == "" {
+		return "", nil
+	}
+
 	return path, nil
 }
 
