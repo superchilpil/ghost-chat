@@ -129,6 +129,9 @@ func (a *App) wireClients() {
 		if event == "chat:connected" {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
+					// Start logging only after the chat client confirms that the
+					// connection is established. Clients connect asynchronously.
+					a.chatLog.Connect(chat.Platform(platform), "")
 					a.transportMu.Lock()
 					transport := payload["transport"]
 					if reason := payload["reason"]; reason != "" {
