@@ -65,6 +65,7 @@ func main() {
 		Icon: appIcon,
 		Windows: application.WindowsOptions{
 			WebviewUserDataPath: webviewUserDataPath,
+			DisableQuitOnLastWindowClosed: true,
 		},
 		ShouldQuit: func() bool {
 			svc.SaveWindowState()
@@ -103,14 +104,10 @@ func main() {
 	tray := app.SystemTray.New()
 	tray.SetTemplateIcon(trayIcon)
 	tray.SetTooltip("Ghost Chat " + version)
-	tray.OnClick(func() {
-		if win.IsVisible() {
-			win.Hide()
-		} else {
-			win.Show()
-			win.Focus()
-		}
-	})
+	// Let Wails manage the tray/window relationship. This keeps the window
+	// hidden without affecting the background Go services and gives the tray
+	// icon the native show/hide behavior.
+	tray.AttachWindow(win)
 
 	menu := app.NewMenu()
 	menu.Add("Ghost Chat " + version).SetEnabled(false)
