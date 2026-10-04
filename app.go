@@ -611,12 +611,10 @@ func (a *App) InstallUpdate() error {
 		return err
 	}
 
-	// Give the installer a moment to start, then release the running executable
-	// so NSIS can replace it with the new version.
-	go func() {
-		time.Sleep(750 * time.Millisecond)
-		os.Exit(0)
-	}()
+	// The updater has already handed the installer off to a helper process
+	// that is waiting for Ghost Chat to exit. Terminate immediately so the
+	// helper can launch NSIS without the old executable locking the install.
+	os.Exit(0)
 
 	return nil
 }
