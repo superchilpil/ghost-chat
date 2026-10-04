@@ -428,15 +428,18 @@ func (a *App) startLiveMonitor() {
 	a.liveMonitorCancel = cancel
 
 	go func() {
-		ticker := time.NewTicker(live.PollInterval(a.livePollInterval()))
-		defer ticker.Stop()
-
 		a.pollLivePlatforms(ctx)
+
 		for {
+			timer := time.NewTimer(live.PollInterval(a.livePollInterval()))
+
 			select {
 			case <-ctx.Done():
+				if !timer.Stop() {
+					<-timer.C
+				}
 				return
-			case <-ticker.C:
+			case <-timer.C:
 				a.pollLivePlatforms(ctx)
 			}
 		}
