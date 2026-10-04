@@ -178,6 +178,12 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 		}()
 	})
 
+	a.window.OnWindowEvent(events.Common.WindowMinimise, func(e *application.WindowEvent) {
+		if a.config.General.MinimizeToTray {
+			a.window.Hide()
+		}
+	})
+
 	a.window.OnWindowEvent(events.Common.WindowDidMove, func(e *application.WindowEvent) {
 		a.lastX, a.lastY = a.window.Position()
 	})
@@ -547,6 +553,7 @@ func (a *App) applyLiveState(platform chat.Platform, isLive bool, input string) 
 		if !connected {
 			if err := a.connect(platform, input, true); err == nil {
 				a.emit("chat:auto-connected", map[string]string{"platform": string(platform)})
+				a.handleAutoLiveWindow()
 			}
 		}
 		return
@@ -582,14 +589,35 @@ func (a *App) ShrinkToChat() {
 }
 
 func (a *App) ToggleVanish() {
-	a.vanished = !a.vanished
+	a.setVanish(!a.vanished)
+}
 
+func (a *App) setVanish(vanish bool) {
+	a.vanished = vanish
 	a.app.Event.Emit("vanish:toggle", a.vanished)
+	a.window.SetIgnoreMouseEvents(vanish)
+}
 
-	if a.vanished {
-		a.window.SetIgnoreMouseEvents(true)
-	} else {
-		a.window.SetIgnoreMouseEvents(false)
+func (a *App) handleAutoLiveWindow() {
+	a.configMu.Lock()
+	autoShow := a.config.General.AutoShowOnLive
+	a.configMu.Unlock()
+
+	if !autoShow || a.window == nil {
+		return
+	}
+
+	// Bring Ghost Chat out of the tray/minimised state and put it in front.
+	a.window.Show()
+	if a.window.IsMinimised() {
+		a.window.UnMinimise()
+	}
+	a.window.Focus()
+
+	// Auto-show always leaves the overlay in vanish mode so it is immediately
+	// usable as a transparent chat overlay without another key press.
+	if !a.vanished {
+		a.setVanish(true)
 	}
 }
 
