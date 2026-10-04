@@ -18,7 +18,9 @@ type General struct {
 	ShowWaitingMessage bool   `json:"show_waiting_message"`
 	MinimizeToTray    bool   `json:"minimize_to_tray"`
 	AutoShowOnLive    bool   `json:"auto_show_on_live"`
-	LivePollInterval int `json:"live_poll_interval"`
+	LivePollInterval   int    `json:"live_poll_interval"`
+	ChatLogEnabled     bool   `json:"chat_log_enabled"`
+	ChatLogDirectory   string `json:"chat_log_directory"`
 }
 
 type VanishKeybind struct {
