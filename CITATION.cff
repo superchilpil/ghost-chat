@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this fork, please also credit the original Ghost Chat project by Enubia listed in the references below."
+title: "Ghost Chat"
+version: "1.0.0"
+authors:
+  - name: "superchilpil"
+date-released: "2026-10-04"
+repository-code: "https://github.com/superchilpil/ghost-chat"
+url: "https://github.com/superchilpil/ghost-chat"
+license: "DON'T BE A DICK PUBLIC LICENSE"
+references:
+  - type: software
+    authors:
+      - name: "Enubia"
+    title: "Ghost Chat"
+    year: 2020
+    repository-code: "https://github.com/Enubia/ghost-chat"
+    url: "https://github.com/Enubia/ghost-chat"
