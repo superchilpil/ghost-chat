@@ -7,3 +7,7 @@ import "fmt"
 func DownloadAndInstall(info *UpdateInfo) error {
 	return fmt.Errorf("automatic installer updates are only supported on Windows installed builds")
 }
+
+func HandleUpdateHelper(args []string) (bool, error) {
+	return false, nil
+}
