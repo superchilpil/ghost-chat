@@ -89,14 +89,16 @@ func HandleUpdateHelper(args []string) (bool, error) {
 	}
 
 	process, err := windows.OpenProcess(windows.SYNCHRONIZE, false, uint32(pid))
-	if err != nil {
-		return true, fmt.Errorf("failed to open Ghost Chat process: %w", err)
-	}
-	defer windows.CloseHandle(process)
+	if err == nil {
+		defer windows.CloseHandle(process)
 
-	_, err = windows.WaitForSingleObject(process, windows.INFINITE)
-	if err != nil {
-		return true, fmt.Errorf("failed waiting for Ghost Chat to exit: %w", err)
+		if _, err = windows.WaitForSingleObject(process, windows.INFINITE); err != nil {
+			return true, fmt.Errorf("failed waiting for Ghost Chat to exit: %w", err)
+		}
+	} else if err != windows.ERROR_INVALID_PARAMETER {
+		// If the original process is still present but cannot be opened, do not
+		// risk launching the installer while it may still be holding the EXE.
+		return true, fmt.Errorf("failed to open Ghost Chat process: %w", err)
 	}
 
 	cmd := exec.Command(installerPath)
