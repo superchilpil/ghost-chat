@@ -386,7 +386,6 @@ func (a *App) connect(platform chat.Platform, input string, automatic bool) erro
 		}
 	}
 
-	a.chatLog.Connect(platform, "")
 	go a.resolveChatLogTitle(platform, input)
 
 	return nil
