@@ -19,7 +19,7 @@
 
 ---
 
-Ghost Chat is a lightweight desktop overlay that displays live chat from **Twitch**, **YouTube**, and **Kick** directly on your screen. No browser needed. Connect to one or all three platforms at once and see messages in a single, unified stream. Ghost Chat can also monitor your configured channels and automatically connect when a stream goes live.
+Ghost Chat is a lightweight desktop overlay that displays live chat from **Twitch**, **YouTube**, and **Kick** directly on your screen. No browser needed. Connect to one or all three platforms at once and see messages in a single, unified stream.
 
 Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 
@@ -64,25 +64,19 @@ These are the core features carried over from the original Ghost Chat project:
 
 ### Features added in this fork
 
-This fork adds several features focused on making Ghost Chat work more like a background streaming companion:
+This fork adds a background/live-stream workflow and other improvements:
 
-- **Automatic live detection** - Monitors configured Twitch, YouTube, and Kick channels and detects when they go live
-- **Automatic chat connection** - Automatically connects to a configured chat when its stream starts
-- **Automatic disconnect** - Disconnects from an automatically connected chat when the stream ends
-- **Per-platform Auto Connect** - Enable or disable automatic connection independently for Twitch, YouTube, and Kick
-- **Explicit Auto Connect confirmation** - Changing a configured channel requires pressing Auto Connect again to confirm the new channel before automatic connection is re-enabled
-- **Background/tray operation** - Ghost Chat can remain hidden in the system tray while continuing to monitor configured channels
-- **Bring to Front and Vanish When Live** - Automatically brings Ghost Chat out of the tray, opens the chat overlay, and enables click-through vanish mode when a configured stream goes live
-- **Return to Tray When Live Ends** - Automatically hides Ghost Chat again after an automatically detected stream ends
-- **Adjustable live detection polling** - Choose how often Ghost Chat checks for live status: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes
-- **YouTube low-latency StreamList chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support
-- **YouTube API key support for releases** - Release builds can include the API configuration needed for automatic YouTube live detection and StreamList chat without requiring the user to configure an API key manually
-- **Improved YouTube message handling** - Deduplicates StreamList messages and preserves chronological message ordering
-- **Connection diagnostics** - Chat connection status can identify the transport being used, including StreamList or Innertube for YouTube
-- **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting
-- **Windows installable release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat
-- **Automated Windows builds** - The repository includes Windows build automation and GitHub Actions release packaging
-- **Persistent settings** - Configuration, window state, Auto Connect settings, themes, and other preferences are saved between launches
+- **Automatic Live Chat** - Enable Auto Connect for Twitch, YouTube, and/or Kick and Ghost Chat will monitor those channels for live streams. When a configured stream goes live, Ghost Chat automatically connects to its chat, brings the window to the front, switches to the chat view, and enables vanish/click-through mode. When the stream ends, it automatically disconnects and returns to the system tray.
+- **Per-platform Auto Connect** - Automatic Live Chat can be enabled independently for Twitch, YouTube, and Kick. Changing a saved channel requires confirming Auto Connect again before that channel is monitored.
+- **Background operation** - Ghost Chat can remain hidden in the system tray while its configured channels are monitored in the background.
+- **Adjustable live detection** - Choose how often live status is checked: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes.
+- **YouTube low-latency chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support.
+- **Improved YouTube message handling** - Deduplicates StreamList messages and preserves chronological message ordering.
+- **Connection diagnostics** - Chat connection status can identify the transport being used, including StreamList or Innertube for YouTube.
+- **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
+- **Windows prebuilt release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat.
+- **Automated builds** - The repository includes Windows build automation and GitHub Actions release packaging.
+- **Persistent settings** - Configuration, window state, Auto Connect settings, themes, and other preferences are saved between launches.
 
 ## Downloads
 
@@ -100,7 +94,7 @@ For normal Windows users, use the latest release rather than building from sourc
 3. Run it and launch Ghost Chat.
 4. Configure your Twitch, YouTube, and/or Kick channel on the Home screen.
 5. Enable **Auto Connect** for any platform you want Ghost Chat to monitor automatically.
-6. If desired, enable **Minimize to Tray** and **Bring to Front and Vanish When Live** in General Settings.
+6. If desired, enable the tray/live options in General Settings.
 
 No Git, Go, Node.js, pnpm, Wails, or manual dependency installation is required for the prebuilt Windows release.
 
@@ -115,7 +109,18 @@ No Git, Go, Node.js, pnpm, Wails, or manual dependency installation is required 
 - macOS: Xcode Command Line Tools (`xcode-select --install`)
 - Windows: WebView2 (included in Windows 10/11)
 
-Verify: `wails3 doctor`
+### YouTube API key
+
+Self-built copies must provide their **own YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable when building/releasing.
+
+For example on Windows:
+
+```bat
+set YOUTUBE_API_KEY=YOUR_API_KEY
+build.bat
+```
+
+The public prebuilt releases already have the release API configuration embedded, so normal users do not need to create or configure a YouTube API key.
 
 ### Commands
 
