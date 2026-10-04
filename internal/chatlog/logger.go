@@ -22,11 +22,12 @@ type Logger struct {
 	start       time.Time
 	end         time.Time
 	services    map[chat.Platform]bool
+	active      map[chat.Platform]bool
 	streamTitle string
 }
 
 func NewLogger(enabled func() bool, directory func() string) *Logger {
-	return &Logger{enabled: enabled, directory: directory, services: make(map[chat.Platform]bool)}
+	return &Logger{enabled: enabled, directory: directory, services: make(map[chat.Platform]bool), active: make(map[chat.Platform]bool)}
 }
 
 func (l *Logger) Connect(platform chat.Platform, streamTitle string) {
@@ -40,6 +41,7 @@ func (l *Logger) Connect(platform chat.Platform, streamTitle string) {
 		l.start = time.Now()
 		l.end = time.Time{}
 		l.services = make(map[chat.Platform]bool)
+		l.active = make(map[chat.Platform]bool)
 		l.streamTitle = strings.TrimSpace(streamTitle)
 		if err := l.openLocked(); err != nil {
 			fmt.Printf("chat log: failed to open log: %v\n", err)
@@ -48,6 +50,7 @@ func (l *Logger) Connect(platform chat.Platform, streamTitle string) {
 	}
 
 	l.services[platform] = true
+	l.active[platform] = true
 	if l.streamTitle == "" {
 		l.streamTitle = strings.TrimSpace(streamTitle)
 	}
@@ -74,8 +77,8 @@ func (l *Logger) Disconnect(platform chat.Platform) {
 	if l.file == nil {
 		return
 	}
-	delete(l.services, platform)
-	if len(l.services) > 0 {
+	delete(l.active, platform)
+	if len(l.active) > 0 {
 		l.renameLocked()
 		return
 	}
@@ -88,6 +91,7 @@ func (l *Logger) Disconnect(platform chat.Platform) {
 	l.start = time.Time{}
 	l.end = time.Time{}
 	l.services = make(map[chat.Platform]bool)
+	l.active = make(map[chat.Platform]bool)
 	l.streamTitle = ""
 }
 
@@ -278,6 +282,9 @@ var emojiNames = map[rune]string{
 func replaceEmojiDescriptors(value string) string {
 	var b strings.Builder
 	for _, r := range value {
+		if r == ️ || (r >= 0x1F3FB && r <= 0x1F3FF) {
+			continue
+		}
 		if name, ok := emojiNames[r]; ok {
 			b.WriteString(name)
 		} else {
