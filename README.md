@@ -9,26 +9,17 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Enubia/ghost-chat/releases/latest">
-    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/enubia/ghost-chat">
+  <a href="https://github.com/superchilpil/ghost-chat/releases/latest">
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/superchilpil/ghost-chat">
   </a>
-  <a href="https://github.com/Enubia/ghost-chat/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc">
-    <img alt="GitHub issues" src="https://img.shields.io/github/issues/enubia/ghost-chat">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://www.paypal.com/donate/?hosted_button_id=RQFDVMBP397KG">
-    <img src="https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Donate with PayPal" width="145" />
-  </a>
-  <a href="https://ko-fi.com/enubia">
-    <img src="https://img.shields.io/badge/Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-Fi" width="126" />
+  <a href="https://github.com/superchilpil/ghost-chat/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/superchilpil/ghost-chat">
   </a>
 </p>
 
 ---
 
-Ghost Chat is a lightweight desktop overlay that displays live chat from **Twitch**, **YouTube**, and **Kick** directly on your screen. No browser needed. Connect to one or all three platforms at once and see messages in a single, unified stream.
+Ghost Chat is a lightweight desktop overlay that displays live chat from **Twitch**, **YouTube**, and **Kick** directly on your screen. No browser needed. Connect to one or all three platforms at once and see messages in a single, unified stream. Ghost Chat can also monitor your configured channels and automatically connect when a stream goes live.
 
 Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 
@@ -58,6 +49,9 @@ Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 ## Features
 
 - **Multi-platform chat** - Twitch IRC, YouTube Live Chat, and Kick in one overlay
+- **Automatic live detection** - Monitor your configured Twitch, YouTube, and Kick channels and automatically connect when a stream goes live
+- **Automatic disconnect** - Automatically disconnect from chats when the associated stream ends
+- **YouTube low-latency chat** - Uses YouTube Live Chat StreamList when an API key is available, with Innertube fallback support
 - **Vanish mode** - Toggle transparency and click-through with a global hotkey
 - **Custom themes** - Built-in themes (Default, Compact, Bubble) or create your own
 - **Emote support** - Native Twitch, BTTV, FFZ, 7TV, YouTube custom emoji, Kick emotes
@@ -72,8 +66,8 @@ Built with Go and Wails v3 for native performance. Runs on macOS and Windows.
 
 | Platform | Download |
 |----------|----------|
-| macOS (Universal) | [ghost-chat-macos.zip](https://github.com/Enubia/ghost-chat/releases/latest) |
-| Windows | [ghost-chat.exe](https://github.com/Enubia/ghost-chat/releases/latest) |
+| macOS (Universal) | [ghost-chat-macos.zip](https://github.com/superchilpil/ghost-chat/releases/latest) |
+| Windows | [ghost-chat.exe](https://github.com/superchilpil/ghost-chat/releases/latest) |
 
 ## Development
 
@@ -104,7 +98,7 @@ cd frontend && pnpm fix   # lint + format
 |-------|------|
 | Backend | Go, Wails v3 bindings + events |
 | Frontend | React, TypeScript, Zustand, CSS Modules |
-| Chat clients | Twitch IRC (WebSocket), YouTube innertube (HTTP polling), Kick Pusher (WebSocket) |
+| Chat clients | Twitch IRC (WebSocket), YouTube StreamList/Innertube, Kick Pusher (WebSocket) |
 | Build | Taskfile, Vite, GitHub Actions |
 
 See [CLAUDE.md](CLAUDE.md) for the full project structure and conventions.
@@ -121,6 +115,10 @@ Ghost Chat uses i18next. To add a language:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Credits
+
+Ghost Chat was originally created by [Enubia](https://github.com/Enubia) and this project is based on the original [Ghost Chat](https://github.com/Enubia/ghost-chat). Original project credit remains with its creator.
 
 <p align="center">
   <a href="https://github.com/enubia/ghost-chat/graphs/contributors">
