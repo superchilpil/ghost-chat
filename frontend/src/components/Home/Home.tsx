@@ -45,18 +45,34 @@ export function Home() {
         return config?.kick?.auto_connect ?? false;
     };
 
+    const getSavedInput = (platform: Platform): string => {
+        if (platform === Platform.PlatformTwitch) return config?.twitch?.default_channel ?? '';
+        if (platform === Platform.PlatformYouTube) return config?.youtube?.channel_id ?? '';
+        return config?.kick?.default_channel ?? '';
+    };
+
+    const autoButtonLabel = (platform: Platform): string => {
+        if (!isAutoEnabled(platform)) return 'Auto Connect';
+        return getSavedInput(platform).trim() === getInput(platform).trim()
+            ? 'Auto Connect Enabled'
+            : 'Update Auto Connect';
+    };
+
     const saveAutoConnect = async (platform: Platform) => {
         setError(null);
         const input = getInput(platform).trim();
         if (!input) return;
 
         const enabled = isAutoEnabled(platform);
+        const sameSavedInput = input === getSavedInput(platform).trim();
+        const nextEnabled = enabled && sameSavedInput ? false : true;
+
         if (platform === Platform.PlatformTwitch) {
-            await update({ twitch: { default_channel: input, auto_connect: !enabled } });
+            await update({ twitch: { default_channel: input, auto_connect: nextEnabled } });
         } else if (platform === Platform.PlatformYouTube) {
-            await update({ youtube: { channel_id: input, video_url: input, auto_connect: !enabled } });
+            await update({ youtube: { channel_id: input, video_url: input, auto_connect: nextEnabled } });
         } else {
-            await update({ kick: { default_channel: input, auto_connect: !enabled } });
+            await update({ kick: { default_channel: input, auto_connect: nextEnabled } });
         }
     };
 
@@ -120,7 +136,7 @@ export function Home() {
                         onClick={() => void saveAutoConnect(Platform.PlatformTwitch)}
                         disabled={!getInput(Platform.PlatformTwitch) || connecting !== null}
                     >
-                        {isAutoEnabled(Platform.PlatformTwitch) ? 'Auto Connect Enabled' : 'Auto Connect'}
+                        {autoButtonLabel(Platform.PlatformTwitch)}
                     </button>
                 </div>
 
@@ -164,7 +180,7 @@ export function Home() {
                         onClick={() => void saveAutoConnect(Platform.PlatformYouTube)}
                         disabled={!getInput(Platform.PlatformYouTube) || connecting !== null}
                     >
-                        {isAutoEnabled(Platform.PlatformYouTube) ? 'Auto Connect Enabled' : 'Auto Connect'}
+                        {autoButtonLabel(Platform.PlatformYouTube)}
                     </button>
                 </div>
 
@@ -208,7 +224,7 @@ export function Home() {
                         onClick={() => void saveAutoConnect(Platform.PlatformKick)}
                         disabled={!getInput(Platform.PlatformKick) || connecting !== null}
                     >
-                        {isAutoEnabled(Platform.PlatformKick) ? 'Auto Connect Enabled' : 'Auto Connect'}
+                        {autoButtonLabel(Platform.PlatformKick)}
                     </button>
                 </div>
 
