@@ -633,44 +633,44 @@ func (a *App) handleAutoLiveEnded() {
 
 
 func (a *App) resolveChatLogTitle(platform chat.Platform, input string) {
-\tif a.chatLog == nil {
-\t\treturn
-\t}
-\ta.configMu.Lock()
-\tapiKey := cfgYouTubeAPIKey(a.config)
-\ta.configMu.Unlock()
+	if a.chatLog == nil {
+		return
+	}
+	a.configMu.Lock()
+	apiKey := cfgYouTubeAPIKey(a.config)
+	a.configMu.Unlock()
 
-\ttoken := ""
-\tif platform == chat.PlatformTwitch && a.auth.LoggedIn() {
-\t\tif t, err := a.auth.AccessToken(context.Background()); err == nil {
-\t\t\ttoken = t
-\t\t}
-\t}
+	token := ""
+	if platform == chat.PlatformTwitch && a.auth.LoggedIn() {
+		if t, err := a.auth.AccessToken(context.Background()); err == nil {
+			token = t
+		}
+	}
 
-\ttitle, err := live.StreamTitle(context.Background(), platform, input, token, apiKey)
-\tif err == nil && strings.TrimSpace(title) != "" {
-\t\ta.chatLog.SetStreamTitle(title)
-\t}
+	title, err := live.StreamTitle(context.Background(), platform, input, token, apiKey)
+	if err == nil && strings.TrimSpace(title) != "" {
+		a.chatLog.SetStreamTitle(title)
+	}
 }
 
 func (a *App) SelectChatLogDirectory() (string, error) {
-\tinitial := ""
-\ta.configMu.Lock()
-\tinitial = a.config.General.ChatLogDirectory
-\ta.configMu.Unlock()
+	initial := ""
+	a.configMu.Lock()
+	initial = a.config.General.ChatLogDirectory
+	a.configMu.Unlock()
 
-\tdialog := a.app.Dialog.OpenFile().
-\t\tSetTitle("Select Chat Log Folder").
-\t\tCanChooseDirectories(true).
-\t\tCanChooseFiles(false)
-\tif strings.TrimSpace(initial) != "" {
-\t\tdialog.SetDirectory(initial)
-\t}
-\tpath, err := dialog.PromptForSingleSelection()
-\tif err != nil || path == "" {
-\t\treturn "", err
-\t}
-\treturn path, nil
+	dialog := a.app.Dialog.OpenFile().
+		SetTitle("Select Chat Log Folder").
+		CanChooseDirectories(true).
+		CanChooseFiles(false)
+	if strings.TrimSpace(initial) != "" {
+		dialog.SetDirectory(initial)
+	}
+	path, err := dialog.PromptForSingleSelection()
+	if err != nil || path == "" {
+		return "", err
+	}
+	return path, nil
 }
 
 func (a *App) InstallUpdate() error {
