@@ -275,7 +275,11 @@ jobs:
             - Connection diagnostics showing the active chat transport.
             - Release builds can embed the YouTube API configuration.
 
-            ### Windows experience
+            ### Original project credit
+- Ghost Chat was originally created by **Enubia**. This release is a fork and continuation of the original project.
+- Original repository: https://github.com/Enubia/ghost-chat
+
+### Windows experience
             - Windows system tray integration.
             - Prebuilt Windows portable executable.
             - Windows NSIS installer.
