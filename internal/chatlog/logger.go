@@ -282,7 +282,7 @@ var emojiNames = map[rune]string{
 func replaceEmojiDescriptors(value string) string {
 	var b strings.Builder
 	for _, r := range value {
-		if r == ️ || (r >= 0x1F3FB && r <= 0x1F3FF) {
+		if r == '\uFE0F' || (r >= 0x1F3FB && r <= 0x1F3FF) {
 			continue
 		}
 		if name, ok := emojiNames[r]; ok {
