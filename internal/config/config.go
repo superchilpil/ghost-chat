@@ -35,6 +35,7 @@ type TwitchAccount struct {
 
 type TwitchConfig struct {
 	DefaultChannel string        `json:"default_channel"`
+	AutoConnect    bool          `json:"auto_connect"`
 	Fade           bool          `json:"fade"`
 	FadeTimeout    int           `json:"fade_timeout"`
 	Bots           bool          `json:"bots"`
@@ -47,6 +48,7 @@ type TwitchConfig struct {
 
 type YouTubeConfig struct {
 	ChannelID     string   `json:"channel_id"`
+	AutoConnect   bool     `json:"auto_connect"`
 	VideoURL      string   `json:"video_url"`
 	APIKey        string   `json:"api_key"`
 	Fade          bool     `json:"fade"`
@@ -56,6 +58,7 @@ type YouTubeConfig struct {
 
 type KickConfig struct {
 	DefaultChannel string   `json:"default_channel"`
+	AutoConnect    bool     `json:"auto_connect"`
 	Fade           bool     `json:"fade"`
 	FadeTimeout    int      `json:"fade_timeout"`
 	UserBlacklist  []string `json:"user_blacklist"`
