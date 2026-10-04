@@ -55,6 +55,22 @@ export function GeneralSettings() {
                 />
             </div>
 
+            <div className="field-row">
+                <label className="field-label">{t('settings.general.minimize_to_tray')}</label>
+                <Toggle
+                    checked={config?.general?.minimize_to_tray ?? false}
+                    onChange={(v) => void update({ general: { minimize_to_tray: v } })}
+                />
+            </div>
+
+            <div className="field-row">
+                <label className="field-label">{t('settings.general.auto_show_on_live')}</label>
+                <Toggle
+                    checked={config?.general?.auto_show_on_live ?? false}
+                    onChange={(v) => void update({ general: { auto_show_on_live: v } })}
+                />
+            </div>
+
             <div className="field">
                 <label className="field-label">{t('settings.general.vanish_hotkey')}</label>
                 <HotkeyInput
