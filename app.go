@@ -273,6 +273,7 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 
 	oldConfig := a.config
 	oldKeybind := a.config.Keybinds.Vanish.Keybind
+	oldChatLogEnabled := a.config.General.ChatLogEnabled
 	account := a.config.Twitch.Account
 
 	a.config = cfg
@@ -291,6 +292,23 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	}
 
 	a.configMu.Unlock()
+
+	if oldChatLogEnabled && !cfg.General.ChatLogEnabled {
+		a.chatLog.Close()
+	} else if !oldChatLogEnabled && cfg.General.ChatLogEnabled {
+		a.connectionMu.Lock()
+		connected := make(map[chat.Platform]bool, len(a.connectionState))
+		for platform, isConnected := range a.connectionState {
+			connected[platform] = isConnected
+		}
+		a.connectionMu.Unlock()
+		for platform, isConnected := range connected {
+			if !isConnected {
+				continue
+			}
+			a.chatLog.Connect(platform, "")
+		}
+	}
 
 	if cfg.Keybinds.Vanish.Keybind != oldKeybind {
 		if err := ghHotkey.Register(cfg.Keybinds.Vanish.Keybind, a.ToggleVanish); err != nil {
