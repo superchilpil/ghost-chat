@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"ghost-chat/internal/config"
+	"ghost-chat/internal/singleinstance"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,6 +23,14 @@ var appIcon []byte
 var version = "dev"
 
 func main() {
+	if single, err := singleinstance.Acquire(); err != nil {
+		println("Error acquiring Ghost Chat instance lock:", err.Error())
+		return
+	} else if !single {
+		println("Ghost Chat is already running.")
+		return
+	}
+
 	configPath, err := config.GetConfigPath()
 
 	if err != nil {
