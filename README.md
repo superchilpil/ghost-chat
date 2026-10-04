@@ -71,6 +71,8 @@ For normal Windows users, use the latest release rather than building from sourc
 | **Windows (recommended)** | [Latest Windows release](https://github.com/superchilpil/ghost-chat/releases/latest) |
 | macOS (Universal) | [Latest macOS release](https://github.com/superchilpil/ghost-chat/releases/latest) |
 
+> **macOS note:** I do not currently have access to a Mac, so I have no way to personally test the macOS build. The macOS version is built through GitHub Actions, but Mac users should be aware that it has not been personally tested by me. If you encounter a macOS-specific issue, please report it so it can be investigated.
+
 ### Windows installation
 
 1. Open the [latest release](https://github.com/superchilpil/ghost-chat/releases/latest).
