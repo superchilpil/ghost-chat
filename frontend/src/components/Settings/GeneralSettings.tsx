@@ -80,12 +80,12 @@ export function GeneralSettings() {
             </div>
 
             <div className="field-section">
-                <label className="field-section-label">Chat Log</label>
-                <span className="field-hint">Save all connected service chat messages into one session log.</span>
+                <label className="field-section-label">{t('settings.general.chat_log_section')}</label>
+                <span className="field-hint">{t('settings.general.chat_log_hint')}</span>
             </div>
 
             <div className="field-row">
-                <label className="field-label">Enable Chat Log</label>
+                <label className="field-label">{t('settings.general.chat_log_enabled')}</label>
                 <Toggle
                     checked={config?.general?.chat_log_enabled ?? false}
                     onChange={(v) => void update({ general: { chat_log_enabled: v } })}
@@ -97,7 +97,7 @@ export function GeneralSettings() {
                 <div className="field-row">
                     <input
                         value={config?.general?.chat_log_directory ?? ''}
-                        placeholder="Choose a folder for chat logs"
+                        placeholder={t('settings.general.chat_log_placeholder')}
                         readOnly
                     />
                     <button
@@ -112,7 +112,7 @@ export function GeneralSettings() {
                         Browse
                     </button>
                 </div>
-                <span className="field-hint">Chat logs are only written when logging is enabled.</span>
+                <span className="field-hint">{t('settings.general.chat_log_location_hint')}</span>
             </div>
 
             <div className="field-row">
