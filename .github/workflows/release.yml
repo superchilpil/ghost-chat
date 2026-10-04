@@ -248,9 +248,9 @@ jobs:
           generate_release_notes: true
           append_body: true
           body: |
-            # Ghost Chat v1.0.0 — Full Release
+            # Ghost Chat ${VERSION_TAG} — Full Release
 
-            **This is the full v1.0.0 release of this Ghost Chat fork. It is not a release candidate.**
+            **This is the full ${VERSION_TAG} release of this Ghost Chat fork. It is not a release candidate.**
 
             This release marks the first full release of the fork's new automatic live-stream workflow and Windows-focused distribution improvements.
 
@@ -276,10 +276,10 @@ jobs:
             - Release builds can embed the YouTube API configuration.
 
             ### Original project credit
-- Ghost Chat was originally created by **Enubia**. This release is a fork and continuation of the original project.
-- Original repository: https://github.com/Enubia/ghost-chat
+            - Ghost Chat was originally created by **Enubia**. This release is a fork and continuation of the original project.
+            - Original repository: https://github.com/Enubia/ghost-chat
 
-### Windows experience
+            ### Windows experience
             - Windows system tray integration.
             - Prebuilt Windows portable executable.
             - Windows NSIS installer.
@@ -314,7 +314,11 @@ jobs:
 
             ### Installation / Usage / Bug reporting
 
-            A detailed description is available on our [wiki](https://github.com/Enubia/ghost-chat/wiki).
+            Documentation, installation instructions, troubleshooting, and usage information are available on the [Ghost Chat fork wiki](https://github.com/superchilpil/ghost-chat/wiki).
+
+            **Bug reports:** Please use the [Issues](https://github.com/superchilpil/ghost-chat/issues) section of this repository.
+
+            **Updates and downloads:** Use the [releases](https://github.com/superchilpil/ghost-chat/releases) for this fork.
 
             ---
 
