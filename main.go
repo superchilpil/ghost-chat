@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"ghost-chat/internal/config"
+	"ghost-chat/internal/updater"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,6 +23,13 @@ var appIcon []byte
 var version = "dev"
 
 func main() {
+	if handled, err := updater.HandleUpdateHelper(os.Args); handled {
+		if err != nil {
+			println("Update installer error:", err.Error())
+		}
+		return
+	}
+
 	configPath, err := config.GetConfigPath()
 
 	if err != nil {
