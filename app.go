@@ -100,8 +100,9 @@ func (a *App) SetApp(app *application.App, win *application.WebviewWindow) {
 	}
 }
 
-func makeHandlers(emit func(string, any)) (func(chat.ChatMessage), func(string, any)) {
+func makeHandlers(emit func(string, any), logger *chatlog.Logger) (func(chat.ChatMessage), func(string, any)) {
 	onMessage := func(msg chat.ChatMessage) {
+		logger.Message(msg)
 		emit("chat:message", msg)
 	}
 	onEvent := func(event string, data any) {
@@ -123,7 +124,7 @@ func cfgYouTubeAPIKey(cfg *config.Config) string {
 }
 
 func (a *App) wireClients() {
-	onMessage, rawOnEvent := makeHandlers(a.emit)
+	onMessage, rawOnEvent := makeHandlers(a.emit, a.chatLog)
 	onEvent := func(event string, data any) {
 		if event == "chat:connected" {
 			if payload, ok := data.(map[string]string); ok {
