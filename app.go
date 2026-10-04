@@ -562,8 +562,23 @@ func (a *App) applyLiveState(platform chat.Platform, isLive bool, input string) 
 	if connected && automatic {
 		if err := a.Disconnect(platform); err == nil {
 			a.emit("chat:auto-disconnected", map[string]string{"platform": string(platform)})
+			a.handleAutoLiveEnded()
 		}
 	}
+}
+
+func (a *App) handleAutoLiveEnded() {
+	a.configMu.Lock()
+	minimizeToTray := a.config.General.MinimizeToTray
+	a.configMu.Unlock()
+
+	if !minimizeToTray || a.window == nil {
+		return
+	}
+
+	// The stream that triggered automatic mode has ended. Return Ghost Chat
+	// to the tray so it is ready for the next configured live stream.
+	a.window.Hide()
 }
 
 func (a *App) ResolveYouTubeVideo(input string) (string, error) {
