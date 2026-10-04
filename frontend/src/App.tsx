@@ -22,7 +22,7 @@ function App() {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsTab, setSettingsTab] = useState('general');
     const [vanished, setVanished] = useState(false);
-    const [updateInfo, setUpdateInfo] = useState<{ version: string; url: string } | null>(null);
+    const [updateInfo, setUpdateInfo] = useState<{ version: string; url: string; installer_url?: string } | null>(null);
     const { i18n } = useTranslation();
     const load = useConfigStore((s) => s.load);
     const loaded = useConfigStore((s) => s.loaded);
@@ -133,7 +133,7 @@ function App() {
 
     useEffect(() => {
         const cancelUpdate = Events.On('update:available', (ev) => {
-            setUpdateInfo(ev.data as { version: string; url: string });
+            setUpdateInfo(ev.data as { version: string; url: string; installer_url?: string });
         });
 
         return () => {
