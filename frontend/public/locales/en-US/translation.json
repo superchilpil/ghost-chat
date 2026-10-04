@@ -57,7 +57,14 @@
             "auto_show_on_live": "Bring to Front and Vanish When Live",
             "hotkey_hint": "Requires one of Ctrl, Alt, or Shift plus another key. E.g. Ctrl+Shift+V",
             "live_poll_interval": "Live Detection Poll Interval",
-            "live_poll_interval_hint": "How often Ghost Chat checks configured channels for live status."
+            "live_poll_interval_hint": "How often Ghost Chat checks configured channels for live status.",
+            "chat_log_section": "Chat Log",
+            "chat_log_hint": "Save all connected service chat messages into one session log.",
+            "chat_log_enabled": "Enable Chat Log",
+            "chat_log_location": "Chat Log Location",
+            "chat_log_placeholder": "Choose a folder for chat logs",
+            "chat_log_browse": "Browse",
+            "chat_log_location_hint": "Chat logs are only written when logging is enabled."
         },
         "platform": {
             "default_channel": "Default Channel",
