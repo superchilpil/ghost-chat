@@ -74,3 +74,9 @@
     border: 1px solid rgba(224, 111, 111, 0.2);
     border-radius: var(--radius-sm);
 }
+
+
+.autoEnabled {
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
