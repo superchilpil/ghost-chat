@@ -39,6 +39,27 @@ export function Home() {
         void update({ custom_source: { url: sourceURL } }, { silent: true }).then(() => navigate('/source'));
     };
 
+    const isAutoEnabled = (platform: Platform): boolean => {
+        if (platform === Platform.PlatformTwitch) return config?.twitch?.auto_connect ?? false;
+        if (platform === Platform.PlatformYouTube) return config?.youtube?.auto_connect ?? false;
+        return config?.kick?.auto_connect ?? false;
+    };
+
+    const saveAutoConnect = async (platform: Platform) => {
+        setError(null);
+        const input = getInput(platform).trim();
+        if (!input) return;
+
+        const enabled = isAutoEnabled(platform);
+        if (platform === Platform.PlatformTwitch) {
+            await update({ twitch: { default_channel: input, auto_connect: !enabled } });
+        } else if (platform === Platform.PlatformYouTube) {
+            await update({ youtube: { channel_id: input, video_url: input, auto_connect: !enabled } });
+        } else {
+            await update({ kick: { default_channel: input, auto_connect: !enabled } });
+        }
+    };
+
     const handleToggle = async (platform: Platform) => {
         setError(null);
 
@@ -94,6 +115,13 @@ export function Home() {
                               ? t('home.disconnect')
                               : t('home.connect')}
                     </button>
+                    <button
+                        className={`btn ${isAutoEnabled(Platform.PlatformTwitch) ? styles.autoEnabled : 'btn-secondary'}`}
+                        onClick={() => void saveAutoConnect(Platform.PlatformTwitch)}
+                        disabled={!getInput(Platform.PlatformTwitch) || connecting !== null}
+                    >
+                        {isAutoEnabled(Platform.PlatformTwitch) ? 'Auto Connect Enabled' : 'Auto Connect'}
+                    </button>
                 </div>
 
                 <div className={styles.card}>
@@ -131,6 +159,13 @@ export function Home() {
                               ? t('home.disconnect')
                               : t('home.connect')}
                     </button>
+                    <button
+                        className={`btn ${isAutoEnabled(Platform.PlatformYouTube) ? styles.autoEnabled : 'btn-secondary'}`}
+                        onClick={() => void saveAutoConnect(Platform.PlatformYouTube)}
+                        disabled={!getInput(Platform.PlatformYouTube) || connecting !== null}
+                    >
+                        {isAutoEnabled(Platform.PlatformYouTube) ? 'Auto Connect Enabled' : 'Auto Connect'}
+                    </button>
                 </div>
 
                 <div className={styles.card}>
@@ -167,6 +202,13 @@ export function Home() {
                             : connected[Platform.PlatformKick]
                               ? t('home.disconnect')
                               : t('home.connect')}
+                    </button>
+                    <button
+                        className={`btn ${isAutoEnabled(Platform.PlatformKick) ? styles.autoEnabled : 'btn-secondary'}`}
+                        onClick={() => void saveAutoConnect(Platform.PlatformKick)}
+                        disabled={!getInput(Platform.PlatformKick) || connecting !== null}
+                    >
+                        {isAutoEnabled(Platform.PlatformKick) ? 'Auto Connect Enabled' : 'Auto Connect'}
                     </button>
                 </div>
 
