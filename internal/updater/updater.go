@@ -9,8 +9,9 @@ import (
 )
 
 type UpdateInfo struct {
-	Version string `json:"version"`
-	URL     string `json:"url"`
+	Version      string `json:"version"`
+	URL          string `json:"url"`
+	InstallerURL string `json:"installer_url,omitempty"`
 }
 
 type githubRelease struct {
@@ -60,8 +61,24 @@ func CheckForUpdate(currentVersion string) (*UpdateInfo, error) {
 		return nil, nil
 	}
 
-	return &UpdateInfo{
+	info := &UpdateInfo{
 		Version: release.TagName,
-		URL:     release.HTMLURL,
-	}, nil
+		URL:     "https://github.com/superchilpil/ghost-chat/releases/latest",
+	}
+
+	// An installed Windows build can update itself by downloading the matching
+	// NSIS installer. Portable builds intentionally keep the GitHub downloads
+	// page behavior.
+	if isInstalled() {
+		version := config.NormalizeVersion(release.TagName)
+		info.InstallerURL = fmt.Sprintf(
+			"https://github.com/superchilpil/ghost-chat/releases/download/%s/ghost-chat-Setup-%s.exe",
+			release.TagName,
+			version,
+		)
+	}
+
+	return info, nil
 }
+
+
