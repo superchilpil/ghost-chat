@@ -125,7 +125,7 @@ func main() {
 	menu.Add("Toggle Vanish").OnClick(func(_ *application.Context) { svc.ToggleVanish() })
 	menu.Add("Open Config Folder").OnClick(func(_ *application.Context) { svc.OpenConfigFolder() })
 	menu.AddSeparator()
-	menu.Add("Quit").OnClick(func(_ *application.Context) { win.Close() })
+	menu.Add("Quit").OnClick(func(_ *application.Context) { app.Quit() })
 
 	tray.SetMenu(menu)
 
