@@ -51,13 +51,30 @@ export function Home() {
         return config?.kick?.default_channel ?? '';
     };
 
-    const autoButtonLabel = (platform: Platform): string => {
-        if (!isAutoEnabled(platform)) return 'Auto Connect';
-        return getSavedInput(platform).trim() === getInput(platform).trim()
-            ? 'Auto Connect Enabled'
-            : 'Auto Connect';
-    };
+    const isAutoConfirmed = (platform: Platform): boolean =>
+        isAutoEnabled(platform) && getSavedInput(platform).trim() === getInput(platform).trim();
 
+    const autoButtonLabel = (platform: Platform): string =>
+        isAutoConfirmed(platform) ? 'Auto Connect Enabled' : 'Auto Connect';
+
+    const renderAutoConnectButton = (platform: Platform) => {
+        const confirmed = isAutoConfirmed(platform);
+
+        return (
+            <button
+                type="button"
+                className={styles.autoConnectButton}
+                onClick={() => void saveAutoConnect(platform)}
+                disabled={!getInput(platform) || connecting !== null}
+                aria-pressed={confirmed}
+            >
+                <span className={styles.autoSwitch + (confirmed ? ' ' + styles.autoSwitchOn : '')}>
+                    <span className={styles.autoSwitchKnob} />
+                </span>
+                <span>{autoButtonLabel(platform)}</span>
+            </button>
+        );
+    };
     const saveAutoConnect = async (platform: Platform) => {
         setError(null);
         const input = getInput(platform).trim();
@@ -135,14 +152,7 @@ export function Home() {
                               ? t('home.disconnect')
                               : t('home.connect')}
                     </button>
-                    <button
-                        className={`btn ${isAutoEnabled(Platform.PlatformTwitch) ? styles.autoEnabled : 'btn-secondary'}`}
-                        onClick={() => void saveAutoConnect(Platform.PlatformTwitch)}
-                        disabled={!getInput(Platform.PlatformTwitch) || connecting !== null}
-                    >
-                        {autoButtonLabel(Platform.PlatformTwitch)}
-                    </button>
-                </div>
+                    {renderAutoConnectButton(Platform.PlatformTwitch)}                </div>
 
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
@@ -179,14 +189,7 @@ export function Home() {
                               ? t('home.disconnect')
                               : t('home.connect')}
                     </button>
-                    <button
-                        className={`btn ${isAutoEnabled(Platform.PlatformYouTube) ? styles.autoEnabled : 'btn-secondary'}`}
-                        onClick={() => void saveAutoConnect(Platform.PlatformYouTube)}
-                        disabled={!getInput(Platform.PlatformYouTube) || connecting !== null}
-                    >
-                        {autoButtonLabel(Platform.PlatformYouTube)}
-                    </button>
-                </div>
+                    {renderAutoConnectButton(Platform.PlatformYouTube)}                </div>
 
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
@@ -223,14 +226,7 @@ export function Home() {
                               ? t('home.disconnect')
                               : t('home.connect')}
                     </button>
-                    <button
-                        className={`btn ${isAutoEnabled(Platform.PlatformKick) ? styles.autoEnabled : 'btn-secondary'}`}
-                        onClick={() => void saveAutoConnect(Platform.PlatformKick)}
-                        disabled={!getInput(Platform.PlatformKick) || connecting !== null}
-                    >
-                        {autoButtonLabel(Platform.PlatformKick)}
-                    </button>
-                </div>
+                    {renderAutoConnectButton(Platform.PlatformKick)}                </div>
 
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
