@@ -1,6 +1,7 @@
 import { Window, Browser } from '@wailsio/runtime';
 import { InstallUpdate } from '@bindings/ghost-chat/app.js';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 import ghostSvg from '@/assets/ghost.svg';
 import { useConfigStore } from '@/stores/config';
