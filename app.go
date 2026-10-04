@@ -482,7 +482,7 @@ func (a *App) pollYouTubeLive(ctx context.Context, channel string) {
 		return
 	}
 
-	videoURL, isLive, err := live.CheckYouTube(ctx, channel, youtube.ResolveVideoURL)
+	videoURL, isLive, err := live.CheckYouTube(ctx, channel, cfgYouTubeAPIKey(a.config), youtube.ResolveVideoURL)
 	if err != nil || !isLive {
 		a.applyLiveState(chat.PlatformYouTube, false, "")
 		return
