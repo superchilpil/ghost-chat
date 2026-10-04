@@ -93,7 +93,7 @@ export function GeneralSettings() {
             </div>
 
             <div className="field">
-                <label className="field-label">Chat Log Location</label>
+                <label className="field-label">{t('settings.general.chat_log_location')}</label>
                 <div className="field-row">
                     <input
                         value={config?.general?.chat_log_directory ?? ''}
@@ -109,7 +109,7 @@ export function GeneralSettings() {
                             }
                         }}
                     >
-                        Browse
+                        {t('settings.general.chat_log_browse')}
                     </button>
                 </div>
                 <span className="field-hint">{t('settings.general.chat_log_location_hint')}</span>
