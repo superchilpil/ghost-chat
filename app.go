@@ -465,8 +465,25 @@ func (a *App) autoConnectEnabled(platform chat.Platform) bool {
 	}
 }
 
+func (a *App) stopDisabledAutoConnection(platform chat.Platform) {
+	a.connectionMu.Lock()
+	connected := a.connectionState[platform]
+	auto := a.autoOwned[platform]
+	a.connectionMu.Unlock()
+
+	if connected && auto {
+		if err := a.Disconnect(platform); err == nil {
+			a.emit("chat:auto-disconnected", map[string]string{"platform": string(platform)})
+		}
+	}
+}
+
 func (a *App) pollTwitchLive(ctx context.Context, channel string) {
-	if !a.autoConnectEnabled(chat.PlatformTwitch) || strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformTwitch) {
+		a.stopDisabledAutoConnection(chat.PlatformTwitch)
+		return
+	}
+	if strings.TrimSpace(channel) == "" {
 		return
 	}
 
@@ -486,7 +503,11 @@ func (a *App) pollTwitchLive(ctx context.Context, channel string) {
 }
 
 func (a *App) pollKickLive(ctx context.Context, channel string) {
-	if !a.autoConnectEnabled(chat.PlatformKick) || strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformKick) {
+		a.stopDisabledAutoConnection(chat.PlatformKick)
+		return
+	}
+	if strings.TrimSpace(channel) == "" {
 		return
 	}
 
@@ -499,7 +520,11 @@ func (a *App) pollKickLive(ctx context.Context, channel string) {
 }
 
 func (a *App) pollYouTubeLive(ctx context.Context, channel string) {
-	if !a.autoConnectEnabled(chat.PlatformYouTube) || strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformYouTube) {
+		a.stopDisabledAutoConnection(chat.PlatformYouTube)
+		return
+	}
+	if strings.TrimSpace(channel) == "" {
 		return
 	}
 
