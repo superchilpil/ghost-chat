@@ -1,5 +1,10 @@
 package config
 
+import (
+	"os"
+	"path/filepath"
+)
+
 type WindowState struct {
 	X      int `json:"x"`
 	Y      int `json:"y"`
@@ -121,6 +126,7 @@ func DefaultConfig() Config {
 		General: General{
 			Language:           "en-US",
 			ShowWaitingMessage: true,
+			ChatLogDirectory:   defaultChatLogDirectory(),
 		},
 		Keybinds: Keybinds{
 			Vanish: VanishKeybind{},
@@ -145,4 +151,12 @@ func DefaultConfig() Config {
 			FadeTimeout: 30,
 		},
 	}
+}
+
+func defaultChatLogDirectory() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, "Documents", "Ghost Chat", "Chat Logs")
 }
