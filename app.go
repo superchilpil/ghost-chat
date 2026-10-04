@@ -449,8 +449,24 @@ func (a *App) pollLivePlatforms(ctx context.Context) {
 	go a.pollYouTubeLive(ctx, cfg.YouTube.ChannelID)
 }
 
+func (a *App) autoConnectEnabled(platform chat.Platform) bool {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
+	switch platform {
+	case chat.PlatformTwitch:
+		return a.config.Twitch.AutoConnect
+	case chat.PlatformYouTube:
+		return a.config.YouTube.AutoConnect
+	case chat.PlatformKick:
+		return a.config.Kick.AutoConnect
+	default:
+		return false
+	}
+}
+
 func (a *App) pollTwitchLive(ctx context.Context, channel string) {
-	if strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformTwitch) || strings.TrimSpace(channel) == "" {
 		return
 	}
 
@@ -470,7 +486,7 @@ func (a *App) pollTwitchLive(ctx context.Context, channel string) {
 }
 
 func (a *App) pollKickLive(ctx context.Context, channel string) {
-	if strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformKick) || strings.TrimSpace(channel) == "" {
 		return
 	}
 
@@ -483,7 +499,7 @@ func (a *App) pollKickLive(ctx context.Context, channel string) {
 }
 
 func (a *App) pollYouTubeLive(ctx context.Context, channel string) {
-	if strings.TrimSpace(channel) == "" {
+	if !a.autoConnectEnabled(chat.PlatformYouTube) || strings.TrimSpace(channel) == "" {
 		return
 	}
 
