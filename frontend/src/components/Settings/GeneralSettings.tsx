@@ -63,6 +63,20 @@ export function GeneralSettings() {
                 />
             </div>
 
+            <div className="field">
+                <label className="field-label">{t('settings.general.live_poll_interval')}</label>
+                <select
+                    value={config?.general?.live_poll_interval ?? 15}
+                    onChange={(e) => void update({ general: { live_poll_interval: Number(e.target.value) } })}
+                >
+                    {[5, 10, 15, 30, 60, 120, 300].map((seconds) => (
+                        <option key={seconds} value={seconds}>
+                            {seconds < 60 ? `${seconds} seconds` : `${seconds / 60} minute${seconds === 60 ? '' : 's'}`}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             <div className="field-row">
                 <label className="field-label">{t('settings.general.auto_show_on_live')}</label>
                 <Toggle
