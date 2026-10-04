@@ -1,4 +1,5 @@
 import { Window, Browser } from '@wailsio/runtime';
+import { InstallUpdate } from '@bindings/ghost-chat/app.js';
 import { useTranslation } from 'react-i18next';
 
 import ghostSvg from '@/assets/ghost.svg';
@@ -9,12 +10,23 @@ import styles from './TitleBar.module.css';
 interface TitleBarProps {
     onSettingsToggle: () => void;
     settingsOpen: boolean;
-    updateInfo: { version: string; url: string } | null;
+    updateInfo: { version: string; url: string; installer_url?: string } | null;
 }
 
 export function TitleBar({ onSettingsToggle, settingsOpen, updateInfo }: TitleBarProps) {
     const { t } = useTranslation();
     const hotkeySet = useConfigStore((s) => !!s.config?.keybinds?.vanish?.keybind);
+
+    const handleUpdateClick = () => {
+        if (updateInfo?.installer_url) {
+            void InstallUpdate();
+            return;
+        }
+
+        if (updateInfo?.url) {
+            void Browser.OpenURL(updateInfo.url);
+        }
+    };
 
     return (
         <div className={styles.titlebar}>
@@ -29,7 +41,7 @@ export function TitleBar({ onSettingsToggle, settingsOpen, updateInfo }: TitleBa
                 {updateInfo && (
                     <button
                         className={styles.updateBadge}
-                        onClick={() => void Browser.OpenURL(updateInfo.url)}
+                        onClick={handleUpdateClick}
                         title={t('titlebar.update_available', { version: updateInfo.version })}
                     >
                         {t('titlebar.update_available', { version: updateInfo.version })}
