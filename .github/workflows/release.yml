@@ -275,6 +275,13 @@ jobs:
             - Connection diagnostics showing the active chat transport.
             - Release builds can embed the YouTube API configuration.
 
+            ### Chat logging
+            - Configurable chat log location and optional session logging.
+            - Twitch, YouTube, and Kick messages are combined into one readable transcript when multiple services are used.
+            - Session filenames include the services logged, stream title when available, and start/end timestamps.
+            - Chat messages are archived when received and remain in the log even if they are later deleted by a moderator.
+            - Emoji are written with readable descriptors such as `:thumbs up:` instead of relying on the original emoji glyph.
+
             ### Original project credit
             - Ghost Chat was originally created by **Enubia**. This release is a fork and continuation of the original project.
             - Original repository: https://github.com/Enubia/ghost-chat
