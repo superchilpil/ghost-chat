@@ -52,14 +52,10 @@ These are the core features carried over from the original Ghost Chat project:
 This fork adds a background/live-stream workflow and other improvements:
 
 - **Automatic Live Chat** - Enable Auto Connect for Twitch, YouTube, and/or Kick and Ghost Chat will monitor those channels for live streams. When a configured stream goes live, Ghost Chat automatically connects to its chat, brings the window to the front, switches to the chat view, and enables vanish/click-through mode. When the stream ends, it automatically disconnects and returns to the system tray.
-- **Per-platform Auto Connect** - Automatic Live Chat can be enabled independently for Twitch, YouTube, and Kick. Changing a saved channel requires confirming Auto Connect again before that channel is monitored.
-- **Background operation** - Ghost Chat can remain hidden in the system tray while its configured channels are monitored in the background.
+- **Per-platform Auto Connect** - Automatic Live Chat can be enabled independently for Twitch, YouTube, and Kick.
 - **Adjustable live detection** - Choose how often live status is checked: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes.
 - **YouTube low-latency chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support.
-- **Connection diagnostics** - Chat connection status can identify the transport being used, including StreamList or Innertube for YouTube.
 - **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
-- **Windows prebuilt release** - Prebuilt Windows releases are provided so typical users do not need Go, Node.js, pnpm, Wails, or a development environment to use Ghost Chat.
-- **Automated builds** - The repository includes Windows build automation and GitHub Actions release packaging.
 - **Persistent settings** - Configuration, window state, Auto Connect settings, themes, chat log settings, and other preferences are saved between launches.
 - **Configurable chat logs** - Optionally save all connected Twitch, YouTube, and Kick chat into one readable session transcript in a user-selected folder. Logs include the stream title when available, start/end times, service prefixes (`Y`, `T`, `K`), and emoji descriptors such as `:thumbs up:`. Messages are archived when received and remain in the log even if they are later deleted by a moderator.
 
