@@ -393,26 +393,48 @@ func CheckYouTube(ctx context.Context, channel, apiKey string, resolve func(stri
 		if r.url == "" {
 			return "", false, nil
 		}
-		if apiKey == "" {
-			return "", false, nil
-		}
-		live, err := checkYouTubeVideoLive(ctx, r.url, apiKey)
+
+		// Live detection intentionally uses YouTube's public watch page rather
+		// than videos.list. This keeps Auto Connect from spending Data API quota
+		// every time the live monitor polls a channel.
+		live, err := checkYouTubeWatchPageLive(ctx, r.url)
 		if err != nil {
-			// YouTube can reject the Data API with HTTP 403 because the
-			// embedded/release key is quota-restricted or temporarily rejected.
-			// The stream URL was already resolved from the channel's /live page,
-			// so fall back to YouTube's own watch-page chat data instead of
-			// incorrectly treating the channel as offline.
-			if strings.Contains(err.Error(), "HTTP 403") {
-				if _, _, chatErr := fetchYouTubeLiveChatPage(ctx, r.url); chatErr == nil {
-					return r.url, true, nil
-				}
-			}
 			return "", false, err
 		}
-		if !live {
-			return "", false, nil
-		}
-		return r.url, true, nil
+		return r.url, live, nil
 	}
+}
+
+func checkYouTubeWatchPageLive(ctx context.Context, videoURL string) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, videoURL, nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("User-Agent", browserUA)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("YouTube watch page returned HTTP %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+	if err != nil {
+		return false, err
+	}
+
+	html := string(body)
+
+	// A current live broadcast exposes the live-chat renderer. This is also
+	// the same public page that the Innertube chat transport bootstraps from.
+	if strings.Contains(html, "liveChatRenderer") {
+		return true, nil
+	}
+
+	return false, nil
 }
