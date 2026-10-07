@@ -424,6 +424,12 @@ func (c *Client) pollLoop(ctx context.Context, videoURL, continuation string, cf
 		backoff = defaultPollInterval
 
 		for _, msg := range messages {
+			// Innertube can replay a small overlap after polling errors,
+			// continuation refreshes, or reconnects. Apply the same message-ID
+			// deduplication used by the StreamList transport.
+			if c.markSeen(msg.ID) {
+				continue
+			}
 			c.OnMessage(msg)
 		}
 
