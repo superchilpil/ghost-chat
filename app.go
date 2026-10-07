@@ -735,11 +735,26 @@ func (a *App) ShrinkToChat() {
 }
 
 func (a *App) ToggleVanish() {
-	a.setVanish(!a.vanished)
+	a.setVanish(!a.vanished, true)
 }
 
-func (a *App) setVanish(vanish bool) {
+func (a *App) setVanish(vanish bool, manual bool) {
 	a.vanished = vanish
+
+	// A manual vanish is the user's chosen overlay position. Persist it
+	// immediately so the next launch opens at the same screen location,
+	// rather than waiting for application shutdown.
+	if vanish && manual {
+		a.lastX, a.lastY = a.window.Position()
+		a.configMu.Lock()
+		a.config.WindowState.X = a.lastX
+		a.config.WindowState.Y = a.lastY
+		if err := config.Save(a.config, a.configPath); err != nil {
+			fmt.Printf("failed to save vanish position: %s\\n", err)
+		}
+		a.configMu.Unlock()
+	}
+
 	a.app.Event.Emit("vanish:toggle", a.vanished)
 	a.window.SetIgnoreMouseEvents(vanish)
 }
@@ -763,7 +778,7 @@ func (a *App) handleAutoLiveWindow() {
 	// Auto-show always leaves the overlay in vanish mode so it is immediately
 	// usable as a transparent chat overlay without another key press.
 	if !a.vanished {
-		a.setVanish(true)
+		a.setVanish(true, false)
 	}
 }
 
