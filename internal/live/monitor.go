@@ -333,6 +333,7 @@ func twitchStreamTitle(ctx context.Context, channel, accessToken string) (string
 func youtubeStreamTitle(ctx context.Context, videoURL, apiKey string) (string, error) {
 	videoID := extractYouTubeVideoID(videoURL)
 	if videoID == "" || apiKey == "" { return "", nil }
+	if !youtube.TryConsumeAPIRequest() { return "", nil }
 	endpoint := "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" + url.QueryEscape(videoID) + "&key=" + url.QueryEscape(apiKey)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil { return "", err }
