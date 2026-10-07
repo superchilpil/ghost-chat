@@ -87,50 +87,6 @@ export function YouTubeSettings() {
                 </button>
             </ChannelField>
 
-            <div className="field-section">
-                <label className="field-section-label">{t('settings.youtube.api_safety_section')}</label>
-                <span className="field-hint">{t('settings.youtube.api_safety_hint')}</span>
-            </div>
-
-            <div className="field">
-                <label className="field-label">{t('settings.youtube.api_bypass_password')}</label>
-                <div className="field-row">
-                    <input
-                        type="password"
-                        value={bypassPassword}
-                        onChange={(e) => {
-                            setBypassPassword(e.target.value);
-                            setBypassStatus(null);
-                        }}
-                        placeholder={t('settings.youtube.api_bypass_placeholder')}
-                        autoComplete="off"
-                    />
-                    <button
-                        className="btn btn-ghost"
-                        disabled={bypassEnabled ? false : !bypassPassword}
-                        onClick={async () => {
-                            try {
-                                if (bypassEnabled) {
-                                    await SetYouTubeAPIBypassEnabled(false);
-                                    setBypassEnabled(false);
-                                    setBypassStatus(t('settings.youtube.api_bypass_disabled'));
-                                    return;
-                                }
-                                const enabled = await SetYouTubeAPIBypassPassword(bypassPassword);
-                                setBypassEnabled(enabled);
-                                setBypassStatus(enabled ? t('settings.youtube.api_bypass_enabled') : null);
-                                setBypassPassword('');
-                            } catch (error) {
-                                setBypassStatus(String(error));
-                            }
-                        }}
-                    >
-                        {bypassEnabled ? t('settings.youtube.api_bypass_disable') : t('settings.youtube.api_bypass_button')}
-                    </button>
-                </div>
-                {bypassStatus && <span className="field-success">{bypassStatus}</span>}
-            </div>
-
             <FadeControls
                 fade={yt?.fade ?? false}
                 fadeTimeout={yt?.fade_timeout ?? 30}
