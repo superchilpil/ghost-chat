@@ -53,7 +53,7 @@ type App struct {
 	lastX, lastY     int
 	chatLog          *chatlog.Logger
 	lastW, lastH     int
-	youtubeAPIBypass bool
+	updateAvailable bool
 }
 
 func NewApp(cfg *config.Config, configPath string, version string) *App {
@@ -130,7 +130,7 @@ func (a *App) tryConsumeYouTubeAPIRequest() bool {
 	a.configMu.Lock()
 	defer a.configMu.Unlock()
 
-	if a.youtubeAPIBypass {
+	if a.config.YouTube.APIBypassEnabled {
 		return true
 	}
 
@@ -159,11 +159,15 @@ func (a *App) SetYouTubeAPIBypassPassword(password string) (bool, error) {
 	}
 
 	if subtle.ConstantTimeCompare([]byte(password), []byte(expected)) != 1 {
-		a.youtubeAPIBypass = false
+		a.config.YouTube.APIBypassEnabled = false
+		_ = config.Save(a.config, a.configPath)
 		return false, fmt.Errorf("incorrect YouTube API bypass password")
 	}
 
-	a.youtubeAPIBypass = true
+	a.config.YouTube.APIBypassEnabled = true
+	if err := config.Save(a.config, a.configPath); err != nil {
+		return false, fmt.Errorf("failed to save YouTube API bypass setting: %w", err)
+	}
 	return true, nil
 }
 
@@ -180,7 +184,7 @@ func (a *App) GetYouTubeAPIRequestUsage() map[string]any {
 	return map[string]any{
 		"used":   used,
 		"limit":  youtubeAPIDailyLimit,
-		"bypass": a.youtubeAPIBypass,
+		"bypass": a.config.YouTube.APIBypassEnabled,
 		"reset":  "midnight Pacific Time",
 	}
 }
@@ -263,11 +267,16 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 
 		go func() {
 			info, err := updater.CheckForUpdate(a.version)
-
 			if err != nil || info == nil {
 				return
 			}
 
+			a.configMu.Lock()
+			a.updateAvailable = true
+			a.configMu.Unlock()
+			if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
+				yt.SetStreamListAllowed(false)
+			}
 			a.app.Event.Emit("update:available", info)
 		}()
 	})
