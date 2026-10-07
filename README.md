@@ -55,6 +55,7 @@ This fork adds a background/live-stream workflow and other improvements:
 - **Per-platform Auto Connect** - Automatic Live Chat can be enabled independently for Twitch, YouTube, and Kick.
 - **Adjustable live detection** - Choose how often live status is checked: 5 seconds, 10 seconds, 15 seconds, 30 seconds, 1 minute, 2 minutes, or 5 minutes.
 - **YouTube low-latency chat** - Uses YouTube's Live Chat StreamList transport when available, with Innertube fallback support and improved connection recovery.
+- **YouTube API safety limit** - Ghost Chat allows up to 5 YouTube Data API requests per day per installation, then automatically falls back to Innertube.
 - **YouTube Auto Connect efficiency** - Live detection uses YouTube's public live/watch pages instead of spending Data API quota on every polling check.
 - **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
 - **Persistent settings** - Configuration, window state, Auto Connect settings, themes, chat log settings, and other preferences are saved between launches.
