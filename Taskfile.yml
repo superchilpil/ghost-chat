@@ -22,6 +22,8 @@ tasks:
             ref: .YOUTUBE_API_KEY
           YOUTUBE_API_BYPASS_PASSWORD:
             ref: .YOUTUBE_API_BYPASS_PASSWORD
+          YOUTUBE_API_BYPASS_PASSWORD:
+            ref: .YOUTUBE_API_BYPASS_PASSWORD
 
   package:
     summary: Packages a production build of the application
@@ -30,6 +32,8 @@ tasks:
         vars:
           YOUTUBE_API_KEY:
             ref: .YOUTUBE_API_KEY
+          YOUTUBE_API_BYPASS_PASSWORD:
+            ref: .YOUTUBE_API_BYPASS_PASSWORD
 
   run:
     summary: Runs the application
