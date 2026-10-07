@@ -171,6 +171,17 @@ func (a *App) SetYouTubeAPIBypassPassword(password string) (bool, error) {
 	return true, nil
 }
 
+func (a *App) SetYouTubeAPIBypassEnabled(enabled bool) error {
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
+	a.config.YouTube.APIBypassEnabled = enabled
+	if err := config.Save(a.config, a.configPath); err != nil {
+		return fmt.Errorf("failed to save YouTube API bypass setting: %w", err)
+	}
+	return nil
+}
+
 func (a *App) GetYouTubeAPIRequestUsage() map[string]any {
 	a.configMu.Lock()
 	defer a.configMu.Unlock()
