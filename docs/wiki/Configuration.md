@@ -33,6 +33,8 @@ Choose how frequently Ghost Chat checks configured channels:
 
 Shorter intervals detect a stream going live sooner but perform checks more frequently. For YouTube, these live-status checks use the public live/watch page and do not consume a YouTube Data API quota unit on every poll.
 
+Ghost Chat allows up to **5 YouTube Data API requests per day per installation**. Once that limit is reached, YouTube chat automatically falls back to Innertube.
+
 ## Platform settings
 
 Auto Connect is configured independently for Twitch, YouTube, and Kick.
