@@ -2,8 +2,8 @@ import type { YouTubeConfig } from '@bindings/ghost-chat/internal/config/models.
 
 import type { DeepPartial } from '@/types/utils';
 
-import { ResolveYouTubeVideo, SetYouTubeAPIBypassPassword } from '@bindings/ghost-chat/app.js';
-import { useState } from 'react';
+import { ResolveYouTubeVideo, SetYouTubeAPIBypassPassword, SetYouTubeAPIBypassEnabled, GetYouTubeAPIRequestUsage } from '@bindings/ghost-chat/app.js';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfigStore } from '@/stores/config';
@@ -23,8 +23,15 @@ export function YouTubeSettings() {
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
     const [bypassPassword, setBypassPassword] = useState('');
     const [bypassStatus, setBypassStatus] = useState<string | null>(null);
+    const [bypassEnabled, setBypassEnabled] = useState(false);
 
     const set = (partial: DeepPartial<YouTubeConfig>) => update({ youtube: partial });
+
+    useEffect(() => {
+        void GetYouTubeAPIRequestUsage().then((usage) => {
+            setBypassEnabled(Boolean((usage as { bypass?: boolean }).bypass));
+        }).catch(() => {});
+    }, []);
 
     const handleAutoDetect = async () => {
         if (!channelText) {
@@ -100,10 +107,17 @@ export function YouTubeSettings() {
                     />
                     <button
                         className="btn btn-ghost"
-                        disabled={!bypassPassword}
+                        disabled={bypassEnabled ? false : !bypassPassword}
                         onClick={async () => {
                             try {
+                                if (bypassEnabled) {
+                                    await SetYouTubeAPIBypassEnabled(false);
+                                    setBypassEnabled(false);
+                                    setBypassStatus(t('settings.youtube.api_bypass_disabled'));
+                                    return;
+                                }
                                 const enabled = await SetYouTubeAPIBypassPassword(bypassPassword);
+                                setBypassEnabled(enabled);
                                 setBypassStatus(enabled ? t('settings.youtube.api_bypass_enabled') : null);
                                 setBypassPassword('');
                             } catch (error) {
@@ -111,7 +125,7 @@ export function YouTubeSettings() {
                             }
                         }}
                     >
-                        {t('settings.youtube.api_bypass_button')}
+                        {bypassEnabled ? t('settings.youtube.api_bypass_disable') : t('settings.youtube.api_bypass_button')}
                     </button>
                 </div>
                 {bypassStatus && <span className="field-success">{bypassStatus}</span>}
