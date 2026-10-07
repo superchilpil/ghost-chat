@@ -26,6 +26,8 @@ tasks:
           EXTRA_TAGS: '{{.EXTRA_TAGS}}'
           YOUTUBE_API_KEY:
             ref: .YOUTUBE_API_KEY
+          YOUTUBE_API_BYPASS_PASSWORD:
+            ref: .YOUTUBE_API_BYPASS_PASSWORD
     vars:
       # Default to CGO_ENABLED=0 if not explicitly set
       CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
@@ -50,7 +52,7 @@ tasks:
       - cmd: rm -f *.syso
         platforms: [linux, darwin]
     vars:
-      BUILD_FLAGS: '{{if eq .DEV "true"}}{{if .EXTRA_TAGS}}-tags {{.EXTRA_TAGS}} {{end}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui -X main.version={{.VERSION}}{{if .YOUTUBE_API_KEY}} -X ghost-chat/internal/buildconfig.YouTubeAPIKey={{.YOUTUBE_API_KEY}}{{end}}"{{end}}'
+      BUILD_FLAGS: '{{if eq .DEV "true"}}{{if .EXTRA_TAGS}}-tags {{.EXTRA_TAGS}} {{end}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui -X main.version={{.VERSION}}{{if .YOUTUBE_API_KEY}} -X ghost-chat/internal/buildconfig.YouTubeAPIKey={{.YOUTUBE_API_KEY}}{{end}}{{if .YOUTUBE_API_BYPASS_PASSWORD}} -X ghost-chat/internal/buildconfig.YouTubeAPIBypassPassword={{.YOUTUBE_API_BYPASS_PASSWORD}}{{end}}"{{end}}'
     env:
       GOOS: windows
       CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
