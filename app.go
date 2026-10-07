@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"ghost-chat/internal/auth"
 	"ghost-chat/internal/chat"
@@ -52,6 +53,7 @@ type App struct {
 	lastX, lastY     int
 	chatLog          *chatlog.Logger
 	lastW, lastH     int
+	youtubeAPIBypass bool
 }
 
 func NewApp(cfg *config.Config, configPath string, version string) *App {
@@ -68,6 +70,8 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		lastW:      cfg.WindowState.Width,
 		lastH:      cfg.WindowState.Height,
 	}
+
+	youtube.SetAPIRequestGuard(a.tryConsumeYouTubeAPIRequest)
 
 	a.chatLog = chatlog.NewLogger(
 		func() bool { a.configMu.Lock(); defer a.configMu.Unlock(); return a.config.General.ChatLogEnabled },
@@ -110,6 +114,75 @@ func makeHandlers(emit func(string, any), logger *chatlog.Logger) (func(chat.Cha
 	}
 
 	return onMessage, onEvent
+}
+
+const youtubeAPIDailyLimit = 5
+
+func youtubeQuotaDate() string {
+\tloc, err := time.LoadLocation("America/Los_Angeles")
+\tif err != nil {
+\t\treturn time.Now().UTC().Format("2006-01-02")
+\t}
+\treturn time.Now().In(loc).Format("2006-01-02")
+}
+
+func (a *App) tryConsumeYouTubeAPIRequest() bool {
+\ta.configMu.Lock()
+\tdefer a.configMu.Unlock()
+
+\tif a.youtubeAPIBypass {
+\t\treturn true
+\t}
+
+\ttoday := youtubeQuotaDate()
+\tif a.config.YouTube.APIRequestDate != today {
+\t\ta.config.YouTube.APIRequestDate = today
+\t\ta.config.YouTube.APIRequestsToday = 0
+\t}
+
+\tif a.config.YouTube.APIRequestsToday >= youtubeAPIDailyLimit {
+\t\treturn false
+\t}
+
+\ta.config.YouTube.APIRequestsToday++
+\tif err := config.Save(a.config, a.configPath); err != nil {
+\t\tfmt.Printf("failed to save YouTube API request counter: %s\n", err.Error())
+\t}
+
+\treturn true
+}
+
+func (a *App) SetYouTubeAPIBypassPassword(password string) (bool, error) {
+\texpected := strings.TrimSpace(buildconfig.YouTubeAPIBypassPassword)
+\tif expected == "" {
+\t\treturn false, fmt.Errorf("YouTube API bypass is not configured in this build")
+\t}
+
+\tif subtle.ConstantTimeCompare([]byte(password), []byte(expected)) != 1 {
+\t\ta.youtubeAPIBypass = false
+\t\treturn false, fmt.Errorf("incorrect YouTube API bypass password")
+\t}
+
+\ta.youtubeAPIBypass = true
+\treturn true, nil
+}
+
+func (a *App) GetYouTubeAPIRequestUsage() map[string]any {
+\ta.configMu.Lock()
+\tdefer a.configMu.Unlock()
+
+\ttoday := youtubeQuotaDate()
+\tused := a.config.YouTube.APIRequestsToday
+\tif a.config.YouTube.APIRequestDate != today {
+\t\tused = 0
+\t}
+
+\treturn map[string]any{
+\t\t"used":   used,
+\t\t"limit":  youtubeAPIDailyLimit,
+\t\t"bypass": a.youtubeAPIBypass,
+\t\t"reset":  "midnight Pacific Time",
+\t}
 }
 
 func cfgYouTubeAPIKey(cfg *config.Config) string {
