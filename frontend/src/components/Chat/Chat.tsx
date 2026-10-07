@@ -38,6 +38,7 @@ export function Chat() {
     const connected = twitchConnected || youtubeConnected || kickConnected;
     const connectedCount = [twitchConnected, youtubeConnected, kickConnected].filter(Boolean).length;
     const messagesRef = useRef<HTMLDivElement>(null);
+    const seenMessageIdsRef = useRef<Set<string>>(new Set());
 
     const activeThemeId = config?.theme?.active_theme_id ?? 'default';
     const customThemes = config?.theme?.custom_themes ?? [];
@@ -56,6 +57,23 @@ export function Chat() {
 
             if (!shouldDisplay(msg, cfg)) {
                 return;
+            }
+
+            // Keep a frontend-side guard as a final line of defense against
+            // replayed messages after a reconnect or transport recovery.
+            // Use platform + ID because different services can use overlapping IDs.
+            if (msg.id) {
+                const messageKey = `${msg.platform}:${msg.id}`;
+                if (seenMessageIdsRef.current.has(messageKey)) {
+                    return;
+                }
+                seenMessageIdsRef.current.add(messageKey);
+
+                // Bound the set so a very long stream cannot grow memory forever.
+                if (seenMessageIdsRef.current.size > MAX_MESSAGES * 4) {
+                    const keep = Array.from(seenMessageIdsRef.current).slice(-MAX_MESSAGES * 2);
+                    seenMessageIdsRef.current = new Set(keep);
+                }
             }
 
             setMessages((prev) => {
