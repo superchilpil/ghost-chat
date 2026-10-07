@@ -175,9 +175,12 @@ func (c *Client) Connect(input string) error {
 			logf("StreamList unavailable: no active live chat ID; falling back to Innertube")
 			c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": "no active live chat ID"})
 		}
-	} else {
+	} else if apiKey == "" {
 		logf("no YouTube Data API key in this build; using Innertube fallback")
 		c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": "no YouTube Data API key in this build"})
+	} else {
+		logf("StreamList disabled; using Innertube fallback")
+		c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "innertube", "reason": "StreamList disabled while an update is available"})
 	}
 
 	// Preserve the existing public/unauthenticated transport as a fallback.
