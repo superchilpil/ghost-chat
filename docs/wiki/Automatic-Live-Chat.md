@@ -26,6 +26,18 @@ When the stream ends, Ghost Chat disconnects connections that it created automat
 
 The polling interval is configured under **General Settings**.
 
+Available intervals are:
+
+- 5 seconds
+- 10 seconds
+- 15 seconds
+- 30 seconds
+- 1 minute
+- 2 minutes
+- 5 minutes
+
+For YouTube, live detection uses the public live/watch page rather than spending a YouTube Data API quota unit on every polling check. The polling interval therefore controls how quickly Ghost Chat notices a stream going live, without repeatedly consuming the configured YouTube Data API quota.
+
 Changing the interval does not require restarting Ghost Chat.
 
 ## Auto Connect safety
