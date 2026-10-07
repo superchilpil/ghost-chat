@@ -105,7 +105,7 @@
             "api_bypass_button": "Enable Bypass",
             "api_bypass_disable": "Disable Bypass",
             "api_bypass_disabled": "YouTube API limit bypass disabled.",
-            "api_bypass_enabled": "YouTube API limit bypass enabled for this session."
+            "api_bypass_enabled": "YouTube API limit bypass enabled."
         },
         "kick": {
             "default_channel_placeholder": "channelname"
