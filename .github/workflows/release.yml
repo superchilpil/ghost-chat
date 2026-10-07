@@ -186,17 +186,6 @@ jobs:
           releaseDate: '${DATE}'
           EOF
 
-          DUMMY_SHA="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-          cat > artifacts/latest-mac.yml <<EOF
-          version: ${VERSION}
-          files:
-            - url: ghost-chat-${VERSION}.dmg
-              sha512: ${DUMMY_SHA}
-              size: 1
-          path: ghost-chat-${VERSION}.dmg
-          sha512: ${DUMMY_SHA}
-          releaseDate: '${DATE}'
-          EOF
 
       - uses: softprops/action-gh-release@v2
         with:
