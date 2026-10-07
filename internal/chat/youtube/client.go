@@ -44,6 +44,7 @@ var ErrRateLimited = errors.New("youtube rate-limited this ip (anti-bot)")
 // usually because the continuation token or innertube config has expired.
 var ErrAuthStale = errors.New("youtube auth/config stale")
 var ErrAPIRequestLimitReached = errors.New("youtube daily API request limit reached")
+var ErrStreamListDisabled = errors.New("youtube StreamList disabled")
 
 var httpClient = newHTTPClient()
 
@@ -65,6 +66,8 @@ type Client struct {
 	cacheMu       sync.Mutex
 	cachedVideoURL string
 	cachedChatID   string
+	streamListMu   sync.RWMutex
+	streamListAllowed bool
 
 	OnMessage MessageHandler
 	OnEvent   EventHandler
@@ -76,7 +79,20 @@ func NewClient(onMessage MessageHandler, onEvent EventHandler) *Client {
 		OnMessage: onMessage,
 		OnEvent:   onEvent,
 		seenIDs:   make(map[string]struct{}),
+		streamListAllowed: true,
 	}
+}
+
+func (c *Client) SetStreamListAllowed(allowed bool) {
+	c.streamListMu.Lock()
+	c.streamListAllowed = allowed
+	c.streamListMu.Unlock()
+}
+
+func (c *Client) streamListIsAllowed() bool {
+	c.streamListMu.RLock()
+	defer c.streamListMu.RUnlock()
+	return c.streamListAllowed
 }
 
 func (c *Client) SetAPIKey(apiKey string) {
@@ -131,7 +147,7 @@ func (c *Client) Connect(input string) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if apiKey != "" {
+	if apiKey != "" && c.streamListIsAllowed() {
 		chatID := c.cachedChatIDFor(videoURL)
 		if chatID == "" {
 			chatID, err = fetchLiveChatID(ctx, videoURL, apiKey)
@@ -250,6 +266,21 @@ func (c *Client) streamLoop(ctx context.Context, videoURL, liveChatID, apiKey st
 		default:
 		}
 
+		if !c.streamListIsAllowed() {
+			continuation, cfg, bootstrapErr := fetchInitialData(ctx, videoURL)
+			if bootstrapErr != nil {
+				logf("Innertube fallback bootstrap failed: %v", bootstrapErr)
+				return
+			}
+			c.OnEvent("chat:transport-changed", map[string]string{
+				"platform": string(chat.PlatformYouTube),
+				"transport": "innertube",
+				"reason": "StreamList disabled while an update is available",
+			})
+			go c.pollLoop(ctx, videoURL, continuation, cfg)
+			return
+		}
+
 		nextToken, err := c.streamOnce(ctx, liveChatID, apiKey, pageToken)
 		if errors.Is(err, ErrAPIRequestLimitReached) {
 			logf("daily YouTube API request limit reached during StreamList recovery; falling back to Innertube")
@@ -287,6 +318,9 @@ func (c *Client) streamLoop(ctx context.Context, videoURL, liveChatID, apiKey st
 }
 
 func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken string) (string, error) {
+	if !c.streamListIsAllowed() {
+		return pageToken, ErrStreamListDisabled
+	}
 	if !TryConsumeAPIRequest() {
 		return pageToken, ErrAPIRequestLimitReached
 	}
@@ -325,6 +359,9 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 
 		if next := response.GetNextPageToken(); next != "" {
 			lastToken = next
+		}
+		if !c.streamListIsAllowed() {
+			return lastToken, ErrStreamListDisabled
 		}
 
 		for _, item := range response.GetItems() {
