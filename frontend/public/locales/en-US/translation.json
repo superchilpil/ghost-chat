@@ -103,6 +103,8 @@
             "api_bypass_password": "Owner Bypass Password",
             "api_bypass_placeholder": "Enter owner password",
             "api_bypass_button": "Enable Bypass",
+            "api_bypass_disable": "Disable Bypass",
+            "api_bypass_disabled": "YouTube API limit bypass disabled.",
             "api_bypass_enabled": "YouTube API limit bypass enabled for this session."
         },
         "kick": {
