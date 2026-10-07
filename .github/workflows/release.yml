@@ -263,8 +263,8 @@ jobs:
             - Added recovery handling for YouTube API HTTP 403 responses during live detection.
             - Reuse the active YouTube live chat ID during transient connection recovery instead of repeatedly looking it up.
             - Strengthened YouTube chat recovery and message deduplication to reduce disconnects and repeated messages.
-- Added a five-request daily YouTube Data API safety limit with automatic Innertube fallback, plus an owner-only persistent bypass.
-- Disable YouTube StreamList while a newer Ghost Chat release is available so an update can invalidate an older bypass password.
+            - Added a five-request daily YouTube Data API safety limit with automatic Innertube fallback.
+            - Disable YouTube StreamList while a newer Ghost Chat release is available so the current release is used.
 
             ## Downloads
 
