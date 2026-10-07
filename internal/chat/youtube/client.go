@@ -251,6 +251,21 @@ func (c *Client) streamLoop(ctx context.Context, videoURL, liveChatID, apiKey st
 		}
 
 		nextToken, err := c.streamOnce(ctx, liveChatID, apiKey, pageToken)
+		if errors.Is(err, ErrAPIRequestLimitReached) {
+			logf("daily YouTube API request limit reached during StreamList recovery; falling back to Innertube")
+			continuation, cfg, bootstrapErr := fetchInitialData(ctx, videoURL)
+			if bootstrapErr != nil {
+				logf("Innertube fallback bootstrap failed: %v", bootstrapErr)
+				return
+			}
+			c.OnEvent("chat:transport-changed", map[string]string{
+				"platform": string(chat.PlatformYouTube),
+				"transport": "innertube",
+				"reason": "daily API request limit reached",
+			})
+			go c.pollLoop(ctx, videoURL, continuation, cfg)
+			return
+		}
 		if err == nil {
 			if nextToken != "" {
 				pageToken = nextToken
