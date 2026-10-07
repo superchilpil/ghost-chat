@@ -749,8 +749,9 @@ func (a *App) setVanish(vanish bool, manual bool) {
 		a.configMu.Lock()
 		a.config.WindowState.X = a.lastX
 		a.config.WindowState.Y = a.lastY
+		a.config.WindowState.PositionSaved = true
 		if err := config.Save(a.config, a.configPath); err != nil {
-			fmt.Printf("failed to save vanish position: %s\\n", err)
+			fmt.Printf("failed to save vanish position: %s\n", err)
 		}
 		a.configMu.Unlock()
 	}
