@@ -85,6 +85,7 @@ jobs:
           VERSION: ${{ needs.determine-version.outputs.version }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
+          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
       - name: Zip app bundle
         run: cd bin && zip -r ghost-chat-macos.zip ghost-chat.app
