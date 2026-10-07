@@ -31,7 +31,7 @@ Choose how frequently Ghost Chat checks configured channels:
 - 2 minutes
 - 5 minutes
 
-Shorter intervals detect a stream going live sooner but perform checks more frequently.
+Shorter intervals detect a stream going live sooner but perform checks more frequently. For YouTube, these live-status checks use the public live/watch page and do not consume a YouTube Data API quota unit on every poll.
 
 ## Platform settings
 
