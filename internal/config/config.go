@@ -62,6 +62,8 @@ type YouTubeConfig struct {
 	AutoConnect   bool     `json:"auto_connect"`
 	VideoURL      string   `json:"video_url"`
 	APIKey        string   `json:"api_key"`
+	APIRequestDate string   `json:"api_request_date"`
+	APIRequestsToday int    `json:"api_requests_today"`
 	Fade          bool     `json:"fade"`
 	FadeTimeout   int      `json:"fade_timeout"`
 	UserBlacklist []string `json:"user_blacklist"`
