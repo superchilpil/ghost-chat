@@ -33,7 +33,7 @@ const (
 	maxBackoff              = 60 * time.Second
 	rateLimitBackoffBase    = 30 * time.Second
 	rateLimitBackoffMax     = 5 * time.Minute
-	maxFailuresBeforeReboot = 3
+	maxFailuresBeforeReboot = 8
 )
 
 // ErrRateLimited means YouTube served its anti-bot interstitial (the /sorry page)
@@ -786,7 +786,7 @@ func newHTTPClient() *http.Client {
 	seedConsentCookies(jar)
 
 	return &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 30 * time.Second,
 		Jar:     jar,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if isSorryURL(req.URL) {
