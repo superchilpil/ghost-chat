@@ -237,6 +237,39 @@ func extractYouTubeVideoID(rawURL string) string {
 	if err != nil || u.Path != "/watch" { return "" }
 	return u.Query().Get("v")
 }
+
+// fetchYouTubeLiveChatPage verifies that the resolved watch page contains the
+// live-chat continuation used by the Innertube transport. This is a fallback
+// for Auto Connect when the YouTube Data API returns HTTP 403.
+func fetchYouTubeLiveChatPage(ctx context.Context, videoURL string) (string, []byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, videoURL, nil)
+	if err != nil {
+		return "", nil, err
+	}
+	req.Header.Set("User-Agent", browserUA)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", nil, fmt.Errorf("YouTube watch page returned HTTP %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+	if err != nil {
+		return "", nil, err
+	}
+
+	html := string(body)
+	if !strings.Contains(html, "liveChatRenderer") {
+		return "", nil, fmt.Errorf("YouTube watch page does not contain live chat")
+	}
+
+	return videoURL, body, nil
+}
 // CheckYouTube resolves the configured channel's /live page. ResolveVideoURL
 // already handles both channel IDs and @handles and returns an error when no
 // current live video can be found.
@@ -365,6 +398,16 @@ func CheckYouTube(ctx context.Context, channel, apiKey string, resolve func(stri
 		}
 		live, err := checkYouTubeVideoLive(ctx, r.url, apiKey)
 		if err != nil {
+			// YouTube can reject the Data API with HTTP 403 because the
+			// embedded/release key is quota-restricted or temporarily rejected.
+			// The stream URL was already resolved from the channel's /live page,
+			// so fall back to YouTube's own watch-page chat data instead of
+			// incorrectly treating the channel as offline.
+			if strings.Contains(err.Error(), "HTTP 403") {
+				if _, _, chatErr := fetchYouTubeLiveChatPage(ctx, r.url); chatErr == nil {
+					return r.url, true, nil
+				}
+			}
 			return "", false, err
 		}
 		if !live {
