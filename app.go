@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"fmt"
 	"ghost-chat/internal/auth"
 	"ghost-chat/internal/chat"
@@ -71,6 +73,7 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		lastH:      cfg.WindowState.Height,
 	}
 
+	a.validateYouTubeAPIBypass()
 	youtube.SetAPIRequestGuard(a.tryConsumeYouTubeAPIRequest)
 
 	a.chatLog = chatlog.NewLogger(
@@ -117,6 +120,28 @@ func makeHandlers(emit func(string, any), logger *chatlog.Logger) (func(chat.Cha
 }
 
 const youtubeAPIDailyLimit = 5
+
+func youtubeBypassFingerprint(password string) string {
+	sum := sha256.Sum256([]byte(password))
+	return hex.EncodeToString(sum[:])
+}
+
+func (a *App) validateYouTubeAPIBypass() {
+	expected := strings.TrimSpace(buildconfig.YouTubeAPIBypassPassword)
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+	if !a.config.YouTube.APIBypassEnabled || expected == "" {
+		return
+	}
+	if a.config.YouTube.APIBypassFingerprint != youtubeBypassFingerprint(expected) {
+		a.config.YouTube.APIBypassEnabled = false
+		a.config.YouTube.APIBypassFingerprint = ""
+		if err := config.Save(a.config, a.configPath); err != nil {
+			fmt.Printf("failed to invalidate YouTube API bypass: %s\n", err.Error())
+		}
+	}
+}
+
 
 func youtubeQuotaDate() string {
 	loc, err := time.LoadLocation("America/Los_Angeles")
@@ -165,6 +190,7 @@ func (a *App) SetYouTubeAPIBypassPassword(password string) (bool, error) {
 	}
 
 	a.config.YouTube.APIBypassEnabled = true
+	a.config.YouTube.APIBypassFingerprint = youtubeBypassFingerprint(expected)
 	if err := config.Save(a.config, a.configPath); err != nil {
 		return false, fmt.Errorf("failed to save YouTube API bypass setting: %w", err)
 	}
@@ -176,6 +202,9 @@ func (a *App) SetYouTubeAPIBypassEnabled(enabled bool) error {
 	defer a.configMu.Unlock()
 
 	a.config.YouTube.APIBypassEnabled = enabled
+	if !enabled {
+		a.config.YouTube.APIBypassFingerprint = ""
+	}
 	if err := config.Save(a.config, a.configPath); err != nil {
 		return fmt.Errorf("failed to save YouTube API bypass setting: %w", err)
 	}
