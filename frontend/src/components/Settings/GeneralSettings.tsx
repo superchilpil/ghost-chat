@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SelectChatLogDirectory } from '@bindings/ghost-chat/app.js';
+import { GetYouTubeAPIRequestUsage, SelectChatLogDirectory, SetYouTubeAPIBypassEnabled, SetYouTubeAPIBypassPassword } from '@bindings/ghost-chat/app.js';
 
 import { Toggle } from '@/components/Toggle';
 import { useConfigStore } from '@/stores/config';
@@ -16,6 +17,15 @@ export function GeneralSettings() {
     const { t, i18n } = useTranslation();
     const config = useConfigStore((s) => s.config);
     const update = useConfigStore((s) => s.update);
+    const [bypassPassword, setBypassPassword] = useState('');
+    const [bypassStatus, setBypassStatus] = useState<string | null>(null);
+    const [bypassEnabled, setBypassEnabled] = useState(false);
+
+    useEffect(() => {
+        void GetYouTubeAPIRequestUsage().then((usage) => {
+            setBypassEnabled(Boolean((usage as { bypass?: boolean }).bypass));
+        }).catch(() => {});
+    }, []);
 
     const handleLanguageChange = (lang: string) => {
         void i18n.changeLanguage(lang);
@@ -77,6 +87,50 @@ export function GeneralSettings() {
                         </option>
                     ))}
                 </select>
+            </div>
+
+            <div className="field-section">
+                <label className="field-section-label">{t('settings.general.youtube_api_safety_section')}</label>
+                <span className="field-hint">{t('settings.general.youtube_api_safety_hint')}</span>
+            </div>
+
+            <div className="field">
+                <label className="field-label">{t('settings.general.youtube_api_bypass_password')}</label>
+                <div className="field-row">
+                    <input
+                        type="password"
+                        value={bypassPassword}
+                        onChange={(e) => {
+                            setBypassPassword(e.target.value);
+                            setBypassStatus(null);
+                        }}
+                        placeholder={t('settings.general.youtube_api_bypass_placeholder')}
+                        autoComplete="off"
+                    />
+                    <button
+                        className="btn btn-ghost"
+                        disabled={bypassEnabled ? false : !bypassPassword}
+                        onClick={async () => {
+                            try {
+                                if (bypassEnabled) {
+                                    await SetYouTubeAPIBypassEnabled(false);
+                                    setBypassEnabled(false);
+                                    setBypassStatus(t('settings.general.youtube_api_bypass_disabled'));
+                                    return;
+                                }
+                                const enabled = await SetYouTubeAPIBypassPassword(bypassPassword);
+                                setBypassEnabled(enabled);
+                                setBypassStatus(enabled ? t('settings.general.youtube_api_bypass_enabled') : null);
+                                setBypassPassword('');
+                            } catch (error) {
+                                setBypassStatus(String(error));
+                            }
+                        }}
+                    >
+                        {bypassEnabled ? t('settings.general.youtube_api_bypass_disable') : t('settings.general.youtube_api_bypass_button')}
+                    </button>
+                </div>
+                {bypassStatus && <span className="field-success">{bypassStatus}</span>}
             </div>
 
             <div className="field-section">
