@@ -43,6 +43,7 @@ var ErrRateLimited = errors.New("youtube rate-limited this ip (anti-bot)")
 // ErrAuthStale means the request was rejected as unauthenticated (401/403),
 // usually because the continuation token or innertube config has expired.
 var ErrAuthStale = errors.New("youtube auth/config stale")
+var ErrAPIRequestLimitReached = errors.New("youtube daily API request limit reached")
 
 var httpClient = newHTTPClient()
 
@@ -145,7 +146,7 @@ func (c *Client) Connect(input string) error {
 			c.mu.Unlock()
 
 			c.OnEvent("chat:connected", map[string]string{"platform": string(chat.PlatformYouTube), "transport": "streamList"})
-			go c.streamLoop(ctx, chatID, apiKey)
+			go c.streamLoop(ctx, videoURL, chatID, apiKey)
 			return nil
 		}
 
@@ -208,6 +209,9 @@ func (c *Client) clearCachedChatID(videoURL string) {
 }
 
 func fetchLiveChatID(ctx context.Context, videoURL, apiKey string) (string, error) {
+	if !TryConsumeAPIRequest() {
+		return "", ErrAPIRequestLimitReached
+	}
 	videoID := extractVideoID(videoURL)
 	if videoID == "" {
 		return "", fmt.Errorf("could not extract video ID")
@@ -235,7 +239,7 @@ func fetchLiveChatID(ctx context.Context, videoURL, apiKey string) (string, erro
 	return response.Items[0].LiveStreamingDetails.ActiveLiveChatID, nil
 }
 
-func (c *Client) streamLoop(ctx context.Context, liveChatID, apiKey string) {
+func (c *Client) streamLoop(ctx context.Context, videoURL, liveChatID, apiKey string) {
 	pageToken := ""
 	backoff := time.Second
 
@@ -268,6 +272,9 @@ func (c *Client) streamLoop(ctx context.Context, liveChatID, apiKey string) {
 }
 
 func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken string) (string, error) {
+	if !TryConsumeAPIRequest() {
+		return pageToken, ErrAPIRequestLimitReached
+	}
 	conn, err := grpc.NewClient("dns:///youtube.googleapis.com:443",
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
 			MinVersion: tls.VersionTLS12,
