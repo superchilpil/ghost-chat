@@ -183,8 +183,12 @@ func (a *App) SetYouTubeAPIBypassPassword(password string) (bool, error) {
 		return false, fmt.Errorf("YouTube API bypass is not configured in this build")
 	}
 
+	a.configMu.Lock()
+	defer a.configMu.Unlock()
+
 	if subtle.ConstantTimeCompare([]byte(password), []byte(expected)) != 1 {
 		a.config.YouTube.APIBypassEnabled = false
+		a.config.YouTube.APIBypassFingerprint = ""
 		_ = config.Save(a.config, a.configPath)
 		return false, fmt.Errorf("incorrect YouTube API bypass password")
 	}
