@@ -214,6 +214,14 @@ func (a *App) wireClients() {
 					a.transportMu.Unlock()
 				}
 			}
+		} else if event == "chat:transport-changed" {
+			if payload, ok := data.(map[string]string); ok {
+				if platform, ok := payload["platform"]; ok {
+					a.transportMu.Lock()
+					a.connectionTransport[chat.Platform(platform)] = payload["transport"]
+					a.transportMu.Unlock()
+				}
+			}
 		} else if event == "chat:disconnected" {
 			if payload, ok := data.(map[string]string); ok {
 				if platform, ok := payload["platform"]; ok {
