@@ -54,46 +54,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Release version: `$version`" >> "$GITHUB_STEP_SUMMARY"
 
-  build-macos:
-    needs: determine-version
-    runs-on: macos-15
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.25"
-
-      - uses: pnpm/action-setup@v5
-        with:
-          package_json_file: frontend/package.json
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
-
-      - run: pnpm install --frozen-lockfile
-        working-directory: frontend
-
-      - run: wails3 task darwin:package:universal
-        env:
-          VERSION: ${{ needs.determine-version.outputs.version }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
-
-      - name: Zip app bundle
-        run: cd bin && zip -r ghost-chat-macos.zip ghost-chat.app
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ghost-chat-macos
-          path: bin/ghost-chat-macos.zip
-
   build-windows:
     needs: determine-version
     runs-on: windows-latest
@@ -125,6 +85,7 @@ jobs:
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
       - name: Install NSIS
         shell: powershell
@@ -138,6 +99,7 @@ jobs:
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
       - name: Prepare Windows release assets
         shell: bash
@@ -163,7 +125,7 @@ jobs:
             bin/ghost-chat-Setup-*.exe
 
   create-release:
-    needs: [determine-version, build-macos, build-windows]
+    needs: [determine-version, build-windows]
     runs-on: ubuntu-latest
 
     env:
@@ -208,11 +170,6 @@ jobs:
           PORTABLE_PATH="$(find artifacts -type f -name "ghost-chat.exe" -print -quit)"
           if [ -n "${PORTABLE_PATH}" ] && [ "${PORTABLE_PATH}" != "artifacts/ghost-chat.exe" ]; then
             mv "${PORTABLE_PATH}" "artifacts/ghost-chat.exe"
-          fi
-
-          MAC_PATH="$(find artifacts -type f -name "ghost-chat-macos.zip" -print -quit)"
-          if [ -n "${MAC_PATH}" ] && [ "${MAC_PATH}" != "artifacts/ghost-chat-macos.zip" ]; then
-            mv "${MAC_PATH}" "artifacts/ghost-chat-macos.zip"
           fi
 
           INSTALLER_SHA512="$(sha512sum "artifacts/${INSTALLER}" | awk '{print $1}')"
@@ -269,8 +226,6 @@ jobs:
 
             - **Windows installer:** [ghost-chat Setup](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat-Setup-${VERSION_TAG#v}.exe)
             - **Windows portable:** [ghost-chat.exe](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat.exe)
-            - **Mac:** [ghost-chat-macos.zip](https://github.com/superchilpil/ghost-chat/releases/latest/download/ghost-chat-macos.zip)
-
             ### Settings persistence
 
             Ghost Chat stores its configuration in the Windows user configuration directory rather than inside the application install directory. The installer/uninstaller therefore leaves the configuration intact, allowing a reinstall to retain your settings.
