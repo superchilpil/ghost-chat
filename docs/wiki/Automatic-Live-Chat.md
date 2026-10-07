@@ -40,6 +40,8 @@ For YouTube, live detection uses the public live/watch page rather than spending
 
 Changing the interval does not require restarting Ghost Chat.
 
+If a newer Ghost Chat release is available, StreamList is disabled and YouTube chat falls back to Innertube until the update is installed. This allows a release to invalidate an older owner bypass/password while keeping chat available.
+
 ## Auto Connect safety
 
 Auto Connect must be explicitly confirmed for each platform.
