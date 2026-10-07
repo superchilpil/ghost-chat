@@ -59,6 +59,12 @@ type Client struct {
 	seenMu  sync.Mutex
 	seenIDs map[string]struct{}
 
+	// Keep the active video's liveChatId across transient reconnects so a
+	// recovered StreamList connection does not need another videos.list call.
+	cacheMu       sync.Mutex
+	cachedVideoURL string
+	cachedChatID   string
+
 	OnMessage MessageHandler
 	OnEvent   EventHandler
 }
@@ -125,8 +131,14 @@ func (c *Client) Connect(input string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	if apiKey != "" {
-		chatID, err := fetchLiveChatID(ctx, videoURL, apiKey)
-		if err == nil && chatID != "" {
+		chatID := c.cachedChatIDFor(videoURL)
+		if chatID == "" {
+			chatID, err = fetchLiveChatID(ctx, videoURL, apiKey)
+			if err == nil && chatID != "" {
+				c.cacheChatID(videoURL, chatID)
+			}
+		}
+		if chatID != "" {
 			logf("using StreamList transport")
 			c.mu.Lock()
 			c.cancel = cancel
@@ -168,6 +180,31 @@ func (c *Client) Connect(input string) error {
 	go c.pollLoop(ctx, videoURL, continuation, cfg)
 
 	return nil
+}
+
+func (c *Client) cachedChatIDFor(videoURL string) string {
+	c.cacheMu.Lock()
+	defer c.cacheMu.Unlock()
+	if c.cachedVideoURL != videoURL {
+		return ""
+	}
+	return c.cachedChatID
+}
+
+func (c *Client) cacheChatID(videoURL, chatID string) {
+	c.cacheMu.Lock()
+	c.cachedVideoURL = videoURL
+	c.cachedChatID = chatID
+	c.cacheMu.Unlock()
+}
+
+func (c *Client) clearCachedChatID(videoURL string) {
+	c.cacheMu.Lock()
+	if c.cachedVideoURL == videoURL {
+		c.cachedVideoURL = ""
+		c.cachedChatID = ""
+	}
+	c.cacheMu.Unlock()
 }
 
 func fetchLiveChatID(ctx context.Context, videoURL, apiKey string) (string, error) {
@@ -278,6 +315,7 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 		}
 
 		if response.GetOfflineAt() != "" {
+			c.clearCachedChatIDFromChat(liveChatID)
 			return lastToken, fmt.Errorf("youtube live chat ended")
 		}
 	}
@@ -353,6 +391,15 @@ func optionalString(v string) *string {
 
 func optionalUint32(v uint32) *uint32 { return &v }
 
+
+func (c *Client) clearCachedChatIDFromChat(liveChatID string) {
+	c.cacheMu.Lock()
+	if c.cachedChatID == liveChatID {
+		c.cachedVideoURL = ""
+		c.cachedChatID = ""
+	}
+	c.cacheMu.Unlock()
+}
 
 func (c *Client) Disconnect() {
 	c.mu.Lock()
