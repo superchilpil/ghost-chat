@@ -56,6 +56,7 @@ type App struct {
 	chatLog          *chatlog.Logger
 	lastW, lastH     int
 	updateAvailable bool
+	autoLiveWindowActive bool
 }
 
 func NewApp(cfg *config.Config, configPath string, version string) *App {
@@ -755,17 +756,33 @@ func (a *App) applyLiveState(platform chat.Platform, isLive bool, input string) 
 }
 
 func (a *App) handleAutoLiveEnded() {
-	a.configMu.Lock()
-	minimizeToTray := a.config.General.MinimizeToTray
-	a.configMu.Unlock()
-
-	if !minimizeToTray || a.window == nil {
+	if a.window == nil {
 		return
 	}
 
-	// The stream that triggered automatic mode has ended. Return Ghost Chat
-	// to the tray so it is ready for the next configured live stream.
+	// Only hide the window if auto-live previously brought it out of the tray.
+	// This prevents a manually opened window from being hidden when a stream
+	// ends, and keeps the auto-show/auto-hide behavior paired.
+	a.connectionMu.Lock()
+	stillAutoOwned := false
+	for _, owned := range a.autoOwned {
+		if owned {
+			stillAutoOwned = true
+			break
+		}
+	}
+	a.connectionMu.Unlock()
+
+	if stillAutoOwned {
+		return
+	}
+
+	if !a.autoLiveWindowActive {
+		return
+	}
+
 	a.window.Hide()
+	a.autoLiveWindowActive = false
 }
 
 
@@ -909,6 +926,7 @@ func (a *App) handleAutoLiveWindow() {
 		a.window.UnMinimise()
 	}
 	a.window.Focus()
+	a.autoLiveWindowActive = true
 
 	// Auto-show always leaves the overlay in vanish mode so it is immediately
 	// usable as a transparent chat overlay without another key press.
