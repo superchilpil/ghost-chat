@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -432,11 +433,11 @@ func checkYouTubeWatchPageLive(ctx context.Context, videoURL string) (bool, erro
 
 	html := string(body)
 
-	// A current live broadcast exposes the live-chat renderer. This is also
-	// the same public page that the Innertube chat transport bootstraps from.
-	if strings.Contains(html, "liveChatRenderer") {
-		return true, nil
-	}
-
-	return false, nil
+	// Do not use liveChatRenderer as the live signal: YouTube also keeps it on
+	// archived livestream pages, which would leave Auto Connect attached after
+	// the broadcast ends. The player microformat's isLiveNow flag distinguishes
+	// an active broadcast from its replay without spending Data API quota.
+	return youtubeLiveNowPattern.MatchString(html), nil
 }
+
+var youtubeLiveNowPattern = regexp.MustCompile(`(?s)"liveBroadcastDetails"\\s*:\\s*\\{[^}]*"isLiveNow"\\s*:\\s*true\\b`)
