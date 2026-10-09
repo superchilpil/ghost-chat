@@ -440,4 +440,4 @@ func checkYouTubeWatchPageLive(ctx context.Context, videoURL string) (bool, erro
 	return youtubeLiveNowPattern.MatchString(html), nil
 }
 
-var youtubeLiveNowPattern = regexp.MustCompile(`(?s)"liveBroadcastDetails"\\s*:\\s*\\{[^}]*"isLiveNow"\\s*:\\s*true\\b`)
+var youtubeLiveNowPattern = regexp.MustCompile(`(?s)"liveBroadcastDetails"\s*:\s*\{[^}]*"isLiveNow"\s*:\s*true\b`)
