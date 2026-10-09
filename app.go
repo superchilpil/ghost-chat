@@ -280,6 +280,22 @@ func (a *App) wireClients() {
 					a.transportMu.Unlock()
 				}
 			}
+		} else if event == "chat:stream-ended" {
+			if payload, ok := data.(map[string]string); ok {
+				if platform, ok := payload["platform"]; ok {
+					p := chat.Platform(platform)
+					a.connectionMu.Lock()
+					connected := a.connectionState[p]
+					automatic := a.autoOwned[p]
+					a.connectionMu.Unlock()
+					if connected {
+						if err := a.Disconnect(p); err == nil && automatic {
+							a.emit("chat:auto-disconnected", map[string]string{"platform": string(p)})
+							a.handleAutoLiveEnded()
+						}
+					}
+				}
+			}
 		}
 		rawOnEvent(event, data)
 	}
