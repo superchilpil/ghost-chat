@@ -45,6 +45,7 @@ var ErrRateLimited = errors.New("youtube rate-limited this ip (anti-bot)")
 var ErrAuthStale = errors.New("youtube auth/config stale")
 var ErrAPIRequestLimitReached = errors.New("youtube daily API request limit reached")
 var ErrStreamListDisabled = errors.New("youtube StreamList disabled")
+var ErrLiveChatEnded = errors.New("youtube live chat ended")
 
 var httpClient = newHTTPClient()
 
@@ -307,6 +308,11 @@ func (c *Client) streamLoop(ctx context.Context, videoURL, liveChatID, apiKey st
 			backoff = time.Second
 			continue
 		}
+		if errors.Is(err, ErrLiveChatEnded) {
+			logf("live chat reported that the broadcast ended")
+			c.OnEvent("chat:stream-ended", map[string]string{"platform": string(chat.PlatformYouTube)})
+			return
+		}
 		if ctx.Err() != nil {
 			return
 		}
@@ -378,7 +384,7 @@ func (c *Client) streamOnce(ctx context.Context, liveChatID, apiKey, pageToken s
 
 		if response.GetOfflineAt() != "" {
 			c.clearCachedChatIDFromChat(liveChatID)
-			return lastToken, fmt.Errorf("youtube live chat ended")
+			return lastToken, ErrLiveChatEnded
 		}
 	}
 }
