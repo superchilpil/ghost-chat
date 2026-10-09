@@ -24,6 +24,7 @@ type Logger struct {
 	active      map[chat.Platform]bool
 	streamTitle string
 	headerWritten bool
+	closeTimer *time.Timer
 }
 
 func NewLogger(enabled func() bool, directory func() string) *Logger {
@@ -37,16 +38,33 @@ func (l *Logger) Connect(platform chat.Platform, streamTitle string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
+	if l.closeTimer != nil {
+		l.closeTimer.Stop()
+		l.closeTimer = nil
+	}
+
 	if l.file == nil {
-		l.start = time.Now()
-		l.end = time.Time{}
-		l.services = make(map[chat.Platform]bool)
-		l.active = make(map[chat.Platform]bool)
-		l.streamTitle = strings.TrimSpace(streamTitle)
-		l.headerWritten = false
-		if err := l.openLocked(); err != nil {
-			fmt.Printf("chat log: failed to open log: %v\n", err)
-			return
+		// Reopen the existing session file after a brief disconnect instead of
+		// creating a second log for the same stream.
+		if l.path != "" && !l.start.IsZero() {
+			file, err := os.OpenFile(l.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+			if err != nil {
+				fmt.Printf("chat log: failed to reopen log: %v\n", err)
+				return
+			}
+			l.file = file
+			l.end = time.Time{}
+		} else {
+			l.start = time.Now()
+			l.end = time.Time{}
+			l.services = make(map[chat.Platform]bool)
+			l.active = make(map[chat.Platform]bool)
+			l.streamTitle = strings.TrimSpace(streamTitle)
+			l.headerWritten = false
+			if err := l.openLocked(); err != nil {
+				fmt.Printf("chat log: failed to open log: %v\n", err)
+				return
+			}
 		}
 	}
 
@@ -88,13 +106,24 @@ func (l *Logger) Disconnect(platform chat.Platform) {
 	_ = l.file.Sync()
 	_ = l.file.Close()
 	l.file = nil
-	l.path = ""
-	l.start = time.Time{}
-	l.end = time.Time{}
-	l.services = make(map[chat.Platform]bool)
-	l.active = make(map[chat.Platform]bool)
-	l.streamTitle = ""
-	l.headerWritten = false
+
+	// Keep the session metadata and file path briefly so transient reconnects
+	// append to the same log. If nothing reconnects, retire the session.
+	l.closeTimer = time.AfterFunc(2*time.Minute, func() {
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		if len(l.active) != 0 {
+			return
+		}
+		l.path = ""
+		l.start = time.Time{}
+		l.end = time.Time{}
+		l.services = make(map[chat.Platform]bool)
+		l.active = make(map[chat.Platform]bool)
+		l.streamTitle = ""
+		l.headerWritten = false
+		l.closeTimer = nil
+	})
 }
 
 func (l *Logger) Message(msg chat.ChatMessage) {
@@ -138,14 +167,24 @@ func (l *Logger) Message(msg chat.ChatMessage) {
 func (l *Logger) Close() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.file == nil {
-		return
+	if l.closeTimer != nil {
+		l.closeTimer.Stop()
+		l.closeTimer = nil
 	}
-	l.end = time.Now()
-	l.renameLocked()
-	_ = l.file.Sync()
-	_ = l.file.Close()
-	l.file = nil
+	if l.file != nil {
+		l.end = time.Now()
+		l.renameLocked()
+		_ = l.file.Sync()
+		_ = l.file.Close()
+		l.file = nil
+	}
+	l.path = ""
+	l.start = time.Time{}
+	l.end = time.Time{}
+	l.services = make(map[chat.Platform]bool)
+	l.active = make(map[chat.Platform]bool)
+	l.streamTitle = ""
+	l.headerWritten = false
 }
 
 func (l *Logger) openLocked() error {
