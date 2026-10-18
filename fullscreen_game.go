@@ -90,6 +90,7 @@ func (a *App) enterFullscreenGameMode() {
 	// it or cause the detector to immediately leave game mode.
 	a.setVanish(false, false)
 	a.window.SetPosition(targetX, targetY)
+	setGhostChatAlwaysOnTop(true)
 	if !showGhostChatWithoutActivating() {
 		a.window.Show()
 	}
@@ -125,6 +126,9 @@ func (a *App) exitFullscreenGameMode() {
 		a.configMu.Unlock()
 	}
 
+	// Drop topmost before restoring the normal window state. This is only
+	// enabled while at least one configured game executable is running.
+	setGhostChatAlwaysOnTop(false)
 	a.window.SetPosition(x, y)
 	a.setVanish(restoreVanish, false)
 }
