@@ -116,3 +116,11 @@ func showGhostChatWithoutActivating() bool {
 	)
 	return ok != 0
 }
+
+func isGhostChatForeground() bool {
+	hwnd, _, _ := procGetForegroundWindow.Call()
+	if hwnd == 0 {
+		return false
+	}
+	return strings.Contains(strings.ToLower(foregroundWindowTitle(hwnd)), "ghost-chat")
+}
