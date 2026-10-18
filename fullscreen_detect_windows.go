@@ -17,7 +17,6 @@ var (
 	procIsWindowVisible = fullscreenUser32.NewProc("IsWindowVisible")
 	procGetWindowText = fullscreenUser32.NewProc("GetWindowTextW")
 	procGetWindowThreadProcessID = fullscreenUser32.NewProc("GetWindowThreadProcessId")
-	fullscreenKernel32 = syscall.NewLazyDLL("kernel32.dll")
 	procOpenProcess = fullscreenKernel32.NewProc("OpenProcess")
 	procWaitForSingleObject = fullscreenKernel32.NewProc("WaitForSingleObject")
 	procCloseHandle = fullscreenKernel32.NewProc("CloseHandle")
@@ -25,6 +24,10 @@ var (
 	procShowWindow = fullscreenUser32.NewProc("ShowWindow")
 	procSetWindowPos = fullscreenUser32.NewProc("SetWindowPos")
 	fullscreenHWNDTopmost = ^uintptr(0)
+	fullscreenKernel32 = syscall.NewLazyDLL("kernel32.dll")
+	procCreateToolhelp32Snapshot = fullscreenKernel32.NewProc("CreateToolhelp32Snapshot")
+	procProcess32First = fullscreenKernel32.NewProc("Process32FirstW")
+	procProcess32Next = fullscreenKernel32.NewProc("Process32NextW")
 )
 
 type fullscreenRect struct {
@@ -152,4 +155,54 @@ func fullscreenProcessRunning(pid uint32) bool {
 	defer procCloseHandle.Call(handle)
 	state, _, _ := procWaitForSingleObject.Call(handle, 0)
 	return state == waitTimeout
+}
+
+type fullscreenProcessEntry32 struct {
+	Size              uint32
+	Usage             uint32
+	ProcessID         uint32
+	DefaultHeapID     uintptr
+	ModuleID          uint32
+	Threads           uint32
+	ParentProcessID   uint32
+	BasePriority      int32
+	Flags             uint32
+	ExeFile           [260]uint16
+}
+
+// isConfiguredGameRunning checks all processes, not just the foreground
+// window, so borderless games and games running on another display are handled.
+func isConfiguredGameRunning(executables []string) bool {
+	if len(executables) == 0 {
+		return false
+	}
+	const snapshotProcesses = 0x00000002
+	snapshot, _, _ := procCreateToolhelp32Snapshot.Call(snapshotProcesses, 0)
+	if snapshot == ^uintptr(0) {
+		return false
+	}
+	defer procCloseHandle.Call(snapshot)
+
+	wanted := make(map[string]struct{}, len(executables))
+	for _, executable := range executables {
+		name := strings.ToLower(strings.TrimSpace(executable))
+		if name != "" {
+			wanted[name] = struct{}{}
+		}
+	}
+	if len(wanted) == 0 {
+		return false
+	}
+
+	entry := fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
+	ok, _, _ := procProcess32First.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+	for ok != 0 {
+		name := strings.ToLower(syscall.UTF16ToString(entry.ExeFile[:]))
+		if _, exists := wanted[name]; exists {
+			return true
+		}
+		entry = fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
+		ok, _, _ = procProcess32Next.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+	}
+	return false
 }
