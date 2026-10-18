@@ -44,7 +44,8 @@
             "twitch": "Twitch",
             "youtube": "YouTube",
             "kick": "Kick",
-            "themes": "Designs"
+            "themes": "Designs",
+            "games": "Spiele"
         },
         "general": {
             "language": "Sprache",
@@ -55,8 +56,6 @@
             "show_waiting_message": "Wartenachricht anzeigen",
             "minimize_to_tray": "In den Infobereich minimieren",
             "auto_show_on_live": "Bei Live-Start nach vorne bringen und Vanish aktivieren",
-            "fullscreen_game_mode": "Chatmodus für Vollbildspiele",
-            "fullscreen_game_mode_hint": "Wenn ein Vollbildspiel erkannt wird, wird Ghost Chat undurchsichtig auf Monitor 2 angezeigt. Ziehe das Fenster an die gewünschte Position; sie wird gespeichert. Beim Verlassen des Vollbildmodus werden Position und Vanish-Zustand wiederhergestellt.",
             "live_poll_interval": "Intervall der Live-Erkennung",
             "chat_log_section": "Chat-Protokoll",
             "chat_log_hint": "Speichert Nachrichten aller verbundenen Dienste in einem Sitzungsprotokoll.",
@@ -66,6 +65,23 @@
             "chat_log_browse": "Durchsuchen",
             "chat_log_location_hint": "Chat-Protokolle werden nur gespeichert, wenn die Funktion aktiviert ist.",
             "hotkey_hint": "Erfordert Strg, Alt oder Shift plus eine weitere Taste. Z.B. Strg+Shift+V"
+        },
+        "games": {
+            "title": "Spielspezifische Chat-Positionierung",
+            "description": "Nur Spiele in dieser Liste lösen die Funktion aus. Ghost Chat prüft alle 2 Sekunden, solange die Einstellung aktiv ist. Nicht eingetragene randlose Spiele bleiben unverändert.",
+            "enable": "Spielspezifische Positionierung aktivieren",
+            "running_apps": "Laufende ausführbare Dateien",
+            "refresh": "Liste aktualisieren",
+            "choose_running": "Laufende Anwendung auswählen...",
+            "add_selected": "Auswahl hinzufügen",
+            "manual_exe": "Dateiname der ausführbaren Datei",
+            "manual_placeholder": "z. B. FortniteClient-Win64-Shipping.exe",
+            "add": "Datei hinzufügen",
+            "configured": "Eingerichtete Spiele",
+            "empty": "Noch keine Spiele hinzugefügt.",
+            "remove": "Entfernen",
+            "hint": "Wenn eine eingerichtete Anwendung läuft, wechselt Ghost Chat auf Monitor 2 und in den undurchsichtigen Modus. Sobald alle eingerichteten Spiele geschlossen sind, werden die vorherige Position und der Vanish-Zustand wiederhergestellt.",
+            "error_load": "Laufende Anwendungen konnten nicht gelesen werden."
         },
         "platform": {
             "default_channel": "Standardkanal",
