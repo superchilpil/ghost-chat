@@ -51,6 +51,8 @@ type App struct {
 	emit             func(event string, data any)
 	version          string
 	preExpandWidth   int
+	preExpandX       int
+	preExpandPositionSaved bool
 	vanished         bool
 	lastX, lastY     int
 	chatLog          *chatlog.Logger
@@ -905,9 +907,17 @@ func (a *App) ResolveYouTubeVideo(input string) (string, error) {
 
 func (a *App) ExpandForSettings() {
 	w, h := a.window.Size()
+	x, y := a.window.Position()
 	a.preExpandWidth = w
+	a.preExpandX = x
+	a.preExpandPositionSaved = true
 
-	a.window.SetSize(1000, h)
+	expandedWidth := 1000
+	a.window.SetSize(expandedWidth, h)
+
+	// Keep the chat panel's right edge anchored by moving the wider window
+	// left by exactly the amount of width added for Settings.
+	a.window.SetPosition(x-(expandedWidth-w), y)
 }
 
 func (a *App) ShrinkToChat() {
@@ -919,6 +929,11 @@ func (a *App) ShrinkToChat() {
 	}
 
 	a.window.SetSize(width, h)
+	if a.preExpandPositionSaved {
+		_, y := a.window.Position()
+		a.window.SetPosition(a.preExpandX, y)
+		a.preExpandPositionSaved = false
+	}
 }
 
 func (a *App) ToggleVanish() {
