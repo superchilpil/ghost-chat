@@ -425,6 +425,12 @@ func (a *App) ServiceShutdown() error {
 	return nil
 }
 
+// GetRunningExecutables lists executable names currently running on Windows,
+// allowing the Game settings panel to add a game without typing its filename.
+func (a *App) GetRunningExecutables() []string {
+	return listRunningExecutables()
+}
+
 func (a *App) GetConfig() *config.Config {
 	a.configMu.Lock()
 	defer a.configMu.Unlock()
