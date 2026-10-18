@@ -30,14 +30,23 @@ func (a *App) startFullscreenGameMonitor() {
 		active := a.fullscreenGameActive
 		a.fullscreenMu.Unlock()
 
-		if enabled && isFullscreenForegroundApp() {
+		pid := fullscreenForegroundProcessID()
+		if enabled && pid != 0 {
 			if !active {
-				a.enterFullscreenGameMode()
+				a.enterFullscreenGameMode(pid)
+			} else {
+				a.fullscreenMu.Lock()
+				a.fullscreenGamePID = pid
+				a.fullscreenMu.Unlock()
 			}
 		} else if active {
-			// Keep game mode active while the user is dragging the chat window
-			// to calibrate its saved position on monitor 2.
-			if isGhostChatForeground() {
+			// Keep game mode active while the user drags the chat window to
+			// calibrate its saved position. If the game process exits while
+			// chat has focus, restore the prior window state as well.
+			a.fullscreenMu.Lock()
+			pid := a.fullscreenGamePID
+			a.fullscreenMu.Unlock()
+			if isGhostChatForeground() && fullscreenProcessRunning(pid) {
 				continue
 			}
 			a.exitFullscreenGameMode()
@@ -64,7 +73,7 @@ func (a *App) secondaryWorkArea() (application.Rect, bool) {
 	return application.Rect{}, false
 }
 
-func (a *App) enterFullscreenGameMode() {
+func (a *App) enterFullscreenGameMode(gamePID uint32) {
 	if a.window == nil {
 		return
 	}
@@ -86,6 +95,7 @@ func (a *App) enterFullscreenGameMode() {
 		return
 	}
 	a.fullscreenPreviousX, a.fullscreenPreviousY = x, y
+	a.fullscreenGamePID = gamePID
 	a.fullscreenWasVanished = a.vanished
 	a.fullscreenTargetX, a.fullscreenTargetY = targetX, targetY
 	a.fullscreenGameActive = true
@@ -114,6 +124,7 @@ func (a *App) exitFullscreenGameMode() {
 	restoreVanish := a.fullscreenWasVanished
 	targetX, targetY := a.fullscreenTargetX, a.fullscreenTargetY
 	a.fullscreenGameActive = false
+	a.fullscreenGamePID = 0
 	if a.fullscreenSaveTimer != nil {
 		a.fullscreenSaveTimer.Stop()
 		a.fullscreenSaveTimer = nil
