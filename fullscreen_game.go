@@ -9,10 +9,10 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-const fullscreenGamePollInterval = 500 * time.Millisecond
+const fullscreenGamePollInterval = 2 * time.Second
 
-// startFullscreenGameMonitor watches the foreground Windows window for a
-// fullscreen-sized game. It intentionally does nothing on other platforms.
+// startFullscreenGameMonitor checks the configured executable list on Windows.
+// It does not care whether a selected game is borderless, exclusive, or focused.
 func (a *App) startFullscreenGameMonitor() {
 	if runtime.GOOS != "windows" {
 		return
