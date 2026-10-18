@@ -13,6 +13,7 @@ This fork is based on the original Ghost Chat project created by **Enubia**. The
 - Configurable live detection intervals
 - Automatic bring-to-front and vanish/click-through behavior
 - Windows system-tray integration
+- Windows game-aware chat placement, including a picker for currently running game executables
 - Persistent configuration and window state
 - YouTube low-latency StreamList chat transport with fallback
 - Connection diagnostics
@@ -23,6 +24,7 @@ This fork is based on the original Ghost Chat project created by **Enubia**. The
 
 - [Installation](Installation)
 - [Configuration](Configuration)
+- [Game-Aware-Chat-Placement](Game-Aware-Chat-Placement)
 - [Automatic Live Chat](Automatic-Live-Chat)
 - [Troubleshooting](Troubleshooting)
 - [Building from Source](Building-from-Source)
