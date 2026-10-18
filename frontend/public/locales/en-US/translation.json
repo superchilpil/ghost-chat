@@ -72,18 +72,13 @@
             "title": "Game-Specific Chat Placement",
             "description": "Only games listed here can trigger this behavior. Ghost Chat checks every 2 seconds while this setting is enabled; borderless games not on this list are unaffected.",
             "enable": "Enable game-specific placement",
-            "running_apps": "Running executables",
-            "refresh": "Refresh list",
-            "choose_running": "Select a running executable...",
-            "add_selected": "Add selected",
             "manual_exe": "Executable filename",
             "manual_placeholder": "e.g. FortniteClient-Win64-Shipping.exe",
             "add": "Add executable",
             "configured": "Configured games",
             "empty": "No games added yet.",
             "remove": "Remove",
-            "hint": "When any configured executable is running, Ghost Chat moves to monitor 2, exits vanish mode, and stays opaque. When all configured games close, its previous position and vanish state are restored.",
-            "error_load": "Could not read running executables."
+            "hint": "When any configured executable is running, Ghost Chat moves to monitor 2, exits vanish mode, and stays opaque. When all configured games close, its previous position and vanish state are restored."
         },
         "platform": {
             "default_channel": "Default Channel",
