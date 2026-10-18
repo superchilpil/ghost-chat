@@ -129,6 +129,15 @@ export function GeneralSettings() {
                 />
             </div>
 
+            <div className="field-row">
+                <label className="field-label">{t('settings.general.fullscreen_game_mode')}</label>
+                <Toggle
+                    checked={config?.general?.fullscreen_game_mode ?? false}
+                    onChange={(v) => void update({ general: { fullscreen_game_mode: v } })}
+                />
+            </div>
+            <span className="field-hint">{t('settings.general.fullscreen_game_mode_hint')}</span>
+
             <div className="field">
                 <label className="field-label">{t('settings.general.vanish_hotkey')}</label>
                 <HotkeyInput
