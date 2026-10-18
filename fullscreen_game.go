@@ -126,11 +126,12 @@ func (a *App) exitFullscreenGameMode() {
 		a.configMu.Unlock()
 	}
 
-	// Drop topmost before restoring the normal window state. This is only
-	// enabled while at least one configured game executable is running.
-	setGhostChatAlwaysOnTop(false)
+	// Restore the user's previous overlay state. A vanished chat must remain
+	// topmost after leaving game mode; otherwise it can fall behind browsers
+	// and other windows after returning to the primary monitor.
 	a.window.SetPosition(x, y)
 	a.setVanish(restoreVanish, false)
+	setGhostChatAlwaysOnTop(restoreVanish)
 }
 
 func (a *App) handleWindowMoved() {
