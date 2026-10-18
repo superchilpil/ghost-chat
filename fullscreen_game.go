@@ -90,7 +90,9 @@ func (a *App) enterFullscreenGameMode() {
 	// it or cause the detector to immediately leave game mode.
 	a.setVanish(false, false)
 	a.window.SetPosition(targetX, targetY)
-	a.window.Show()
+	if !showGhostChatWithoutActivating() {
+		a.window.Show()
+	}
 }
 
 func (a *App) exitFullscreenGameMode() {
