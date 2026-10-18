@@ -22,7 +22,8 @@ type General struct {
 	LivePollInterval   int    `json:"live_poll_interval"`
 	ChatLogEnabled     bool   `json:"chat_log_enabled"`
 	ChatLogDirectory   string `json:"chat_log_directory"`
-	FullscreenGameMode bool   `json:"fullscreen_game_mode"`
+	FullscreenGameMode bool     `json:"fullscreen_game_mode"`
+	FullscreenGameExecutables []string `json:"fullscreen_game_executables"`
 	FullscreenChatX    int    `json:"fullscreen_chat_x"`
 	FullscreenChatY    int    `json:"fullscreen_chat_y"`
 }
@@ -139,6 +140,7 @@ func DefaultConfig() Config {
 			ChatLogDirectory:   defaultChatLogDirectory(),
 			FullscreenChatX:    20,
 			FullscreenChatY:    20,
+			FullscreenGameExecutables: []string{},
 		},
 		Keybinds: Keybinds{
 			Vanish: VanishKeybind{},
