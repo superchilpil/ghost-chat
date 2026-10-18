@@ -23,8 +23,8 @@ type General struct {
 	ChatLogEnabled     bool   `json:"chat_log_enabled"`
 	ChatLogDirectory   string `json:"chat_log_directory"`
 	FullscreenGameMode bool   `json:"fullscreen_game_mode"`
-	FullscreenChatX    int    `json:"fullscreen_chat_x"
-	FullscreenChatY    int    `json:"fullscreen_chat_y"
+	FullscreenChatX    int    `json:"fullscreen_chat_x"`
+	FullscreenChatY    int    `json:"fullscreen_chat_y"`
 }
 
 type VanishKeybind struct {
