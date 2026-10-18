@@ -70,18 +70,13 @@
             "title": "Spielspezifische Chat-Positionierung",
             "description": "Nur Spiele in dieser Liste lösen die Funktion aus. Ghost Chat prüft alle 2 Sekunden, solange die Einstellung aktiv ist. Nicht eingetragene randlose Spiele bleiben unverändert.",
             "enable": "Spielspezifische Positionierung aktivieren",
-            "running_apps": "Laufende ausführbare Dateien",
-            "refresh": "Liste aktualisieren",
-            "choose_running": "Laufende Anwendung auswählen...",
-            "add_selected": "Auswahl hinzufügen",
             "manual_exe": "Dateiname der ausführbaren Datei",
             "manual_placeholder": "z. B. FortniteClient-Win64-Shipping.exe",
             "add": "Datei hinzufügen",
             "configured": "Eingerichtete Spiele",
             "empty": "Noch keine Spiele hinzugefügt.",
             "remove": "Entfernen",
-            "hint": "Wenn eine eingerichtete Anwendung läuft, wechselt Ghost Chat auf Monitor 2 und in den undurchsichtigen Modus. Sobald alle eingerichteten Spiele geschlossen sind, werden die vorherige Position und der Vanish-Zustand wiederhergestellt.",
-            "error_load": "Laufende Anwendungen konnten nicht gelesen werden."
+            "hint": "Wenn eine eingerichtete Anwendung läuft, wechselt Ghost Chat auf Monitor 2 und in den undurchsichtigen Modus. Sobald alle eingerichteten Spiele geschlossen sind, werden die vorherige Position und der Vanish-Zustand wiederhergestellt."
         },
         "platform": {
             "default_channel": "Standardkanal",
