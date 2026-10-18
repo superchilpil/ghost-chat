@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { GetRunningExecutables } from '@bindings/ghost-chat/app.js';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ export function GameSettings() {
     const [runningError, setRunningError] = useState(false);
     const configured = config?.general?.fullscreen_game_executables ?? [];
 
-    const refreshRunningExecutables = async () => {
+    const refreshRunningExecutables = useCallback(async () => {
         setLoadingRunning(true);
         setRunningError(false);
         try {
@@ -29,11 +29,11 @@ export function GameSettings() {
         } finally {
             setLoadingRunning(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         void refreshRunningExecutables();
-    }, []);
+    }, [refreshRunningExecutables]);
 
     const availableExecutables = runningExecutables.filter(
         (name) => !configured.some((item) => item.toLowerCase() === name.toLowerCase()),
