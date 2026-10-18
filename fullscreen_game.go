@@ -35,6 +35,11 @@ func (a *App) startFullscreenGameMonitor() {
 				a.enterFullscreenGameMode()
 			}
 		} else if active {
+			// Keep game mode active while the user is dragging the chat window
+			// to calibrate its saved position on monitor 2.
+			if isGhostChatForeground() {
+				continue
+			}
 			a.exitFullscreenGameMode()
 		}
 	}
