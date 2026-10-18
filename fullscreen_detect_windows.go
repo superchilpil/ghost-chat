@@ -172,17 +172,34 @@ type fullscreenProcessEntry32 struct {
 
 // isConfiguredGameRunning checks all processes, not just the foreground
 // window, so borderless games and games running on another display are handled.
-func isConfiguredGameRunning(executables []string) bool {
-	if len(executables) == 0 {
-		return false
-	}
+func listRunningExecutables() []string {
 	const snapshotProcesses = 0x00000002
 	snapshot, _, _ := procCreateToolhelp32Snapshot.Call(snapshotProcesses, 0)
 	if snapshot == ^uintptr(0) {
-		return false
+		return []string{}
 	}
 	defer procCloseHandle.Call(snapshot)
 
+	seen := make(map[string]struct{})
+	result := make([]string, 0, 64)
+	entry := fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
+	ok, _, _ := procProcess32First.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+	for ok != 0 {
+		name := syscall.UTF16ToString(entry.ExeFile[:])
+		key := strings.ToLower(name)
+		if name != "" {
+			if _, exists := seen[key]; !exists {
+				seen[key] = struct{}{}
+				result = append(result, name)
+			}
+		}
+		entry = fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
+		ok, _, _ = procProcess32Next.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+	}
+	return result
+}
+
+func isConfiguredGameRunning(executables []string) bool {
 	wanted := make(map[string]struct{}, len(executables))
 	for _, executable := range executables {
 		name := strings.ToLower(strings.TrimSpace(executable))
@@ -190,19 +207,10 @@ func isConfiguredGameRunning(executables []string) bool {
 			wanted[name] = struct{}{}
 		}
 	}
-	if len(wanted) == 0 {
-		return false
-	}
-
-	entry := fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
-	ok, _, _ := procProcess32First.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
-	for ok != 0 {
-		name := strings.ToLower(syscall.UTF16ToString(entry.ExeFile[:]))
-		if _, exists := wanted[name]; exists {
+	for _, running := range listRunningExecutables() {
+		if _, exists := wanted[strings.ToLower(running)]; exists {
 			return true
 		}
-		entry = fullscreenProcessEntry32{Size: uint32(unsafe.Sizeof(fullscreenProcessEntry32{}))}
-		ok, _, _ = procProcess32Next.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
 	}
 	return false
 }
