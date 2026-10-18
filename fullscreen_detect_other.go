@@ -9,3 +9,5 @@ func fullscreenProcessRunning(uint32) bool { return false }
 func showGhostChatWithoutActivating() bool { return false }
 
 func isGhostChatForeground() bool { return false }
+
+func isConfiguredGameRunning([]string) bool { return false }
