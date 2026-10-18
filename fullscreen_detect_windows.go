@@ -16,6 +16,9 @@ var (
 	procGetMonitorInfo = fullscreenUser32.NewProc("GetMonitorInfoW")
 	procIsWindowVisible = fullscreenUser32.NewProc("IsWindowVisible")
 	procGetWindowText = fullscreenUser32.NewProc("GetWindowTextW")
+	procFindWindow = fullscreenUser32.NewProc("FindWindowW")
+	procShowWindow = fullscreenUser32.NewProc("ShowWindow")
+	procSetWindowPos = fullscreenUser32.NewProc("SetWindowPos")
 )
 
 type fullscreenRect struct {
@@ -82,4 +85,34 @@ func abs32(v int32) int32 {
 		return -v
 	}
 	return v
+}
+
+const (
+	fullscreenSWShownoactivate = 4
+	fullscreenHWNDTopmost      = ^uintptr(0)
+	fullscreenSWPNosize        = 0x0001
+	fullscreenSWPNomove        = 0x0002
+	fullscreenSWPNoactivate    = 0x0010
+	fullscreenSWPShowwindow    = 0x0040
+)
+
+// showGhostChatWithoutActivating makes the overlay visible without stealing
+// foreground focus from a fullscreen game.
+func showGhostChatWithoutActivating() bool {
+	title, err := syscall.UTF16PtrFromString("ghost-chat")
+	if err != nil {
+		return false
+	}
+	hwnd, _, _ := procFindWindow.Call(0, uintptr(unsafe.Pointer(title)))
+	if hwnd == 0 {
+		return false
+	}
+	procShowWindow.Call(hwnd, fullscreenSWShownoactivate)
+	ok, _, _ := procSetWindowPos.Call(
+		hwnd,
+		fullscreenHWNDTopmost,
+		0, 0, 0, 0,
+		fullscreenSWPNosize|fullscreenSWPNomove|fullscreenSWPNoactivate|fullscreenSWPShowwindow,
+	)
+	return ok != 0
 }
