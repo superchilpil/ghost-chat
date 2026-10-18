@@ -16,6 +16,11 @@ var (
 	procGetMonitorInfo = fullscreenUser32.NewProc("GetMonitorInfoW")
 	procIsWindowVisible = fullscreenUser32.NewProc("IsWindowVisible")
 	procGetWindowText = fullscreenUser32.NewProc("GetWindowTextW")
+	procGetWindowThreadProcessID = fullscreenUser32.NewProc("GetWindowThreadProcessId")
+	fullscreenKernel32 = syscall.NewLazyDLL("kernel32.dll")
+	procOpenProcess = fullscreenKernel32.NewProc("OpenProcess")
+	procWaitForSingleObject = fullscreenKernel32.NewProc("WaitForSingleObject")
+	procCloseHandle = fullscreenKernel32.NewProc("CloseHandle")
 	procFindWindow = fullscreenUser32.NewProc("FindWindowW")
 	procShowWindow = fullscreenUser32.NewProc("ShowWindow")
 	procSetWindowPos = fullscreenUser32.NewProc("SetWindowPos")
@@ -46,39 +51,48 @@ func foregroundWindowTitle(hwnd uintptr) string {
 // match its monitor. Windows does not expose a universal, reliable flag that
 // distinguishes exclusive fullscreen from borderless fullscreen.
 func isFullscreenForegroundApp() bool {
+	return fullscreenForegroundProcessID() != 0
+}
+
+func fullscreenForegroundProcessID() uint32 {
 	hwnd, _, _ := procGetForegroundWindow.Call()
 	if hwnd == 0 {
-		return false
+		return 0
 	}
 	visible, _, _ := procIsWindowVisible.Call(hwnd)
 	if visible == 0 {
-		return false
+		return 0
 	}
 	title := strings.TrimSpace(foregroundWindowTitle(hwnd))
 	if title == "" || strings.Contains(strings.ToLower(title), "ghost-chat") {
-		return false
+		return 0
 	}
 
 	var window fullscreenRect
 	ok, _, _ := procGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&window)))
 	if ok == 0 {
-		return false
+		return 0
 	}
 	monitor, _, _ := procMonitorFromWindow.Call(hwnd, 2) // MONITOR_DEFAULTTONEAREST
 	if monitor == 0 {
-		return false
+		return 0
 	}
 	info := fullscreenMonitorInfo{Size: uint32(unsafe.Sizeof(fullscreenMonitorInfo{}))}
 	ok, _, _ = procGetMonitorInfo.Call(monitor, uintptr(unsafe.Pointer(&info)))
 	if ok == 0 {
-		return false
+		return 0
 	}
 
 	const tolerance int32 = 2
-	return abs32(window.Left-info.Monitor.Left) <= tolerance &&
-		abs32(window.Top-info.Monitor.Top) <= tolerance &&
-		abs32(window.Right-info.Monitor.Right) <= tolerance &&
-		abs32(window.Bottom-info.Monitor.Bottom) <= tolerance
+	if abs32(window.Left-info.Monitor.Left) > tolerance ||
+		abs32(window.Top-info.Monitor.Top) > tolerance ||
+		abs32(window.Right-info.Monitor.Right) > tolerance ||
+		abs32(window.Bottom-info.Monitor.Bottom) > tolerance {
+		return 0
+	}
+	var pid uint32
+	procGetWindowThreadProcessID.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	return pid
 }
 
 func abs32(v int32) int32 {
@@ -123,4 +137,19 @@ func isGhostChatForeground() bool {
 		return false
 	}
 	return strings.Contains(strings.ToLower(foregroundWindowTitle(hwnd)), "ghost-chat")
+}
+
+func fullscreenProcessRunning(pid uint32) bool {
+	if pid == 0 {
+		return false
+	}
+	const synchronize = 0x00100000
+	const waitTimeout = 258
+	handle, _, _ := procOpenProcess.Call(synchronize, 0, uintptr(pid))
+	if handle == 0 {
+		return false
+	}
+	defer procCloseHandle.Call(handle)
+	state, _, _ := procWaitForSingleObject.Call(handle, 0)
+	return state == waitTimeout
 }
