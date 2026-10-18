@@ -118,6 +118,15 @@ export class General {
     "language": string;
     "show_timestamps": boolean;
     "show_waiting_message": boolean;
+    "minimize_to_tray": boolean;
+    "auto_show_on_live": boolean;
+    "live_poll_interval": number;
+    "chat_log_enabled": boolean;
+    "chat_log_directory": string;
+    "fullscreen_game_mode": boolean;
+    "fullscreen_game_executables": string[];
+    "fullscreen_chat_x": number;
+    "fullscreen_chat_y": number;
 
     /** Creates a new General instance. */
     constructor($$source: Partial<General> = {}) {
@@ -129,6 +138,33 @@ export class General {
         }
         if (!("show_waiting_message" in $$source)) {
             this["show_waiting_message"] = false;
+        }
+        if (!("minimize_to_tray" in $$source)) {
+            this["minimize_to_tray"] = false;
+        }
+        if (!("auto_show_on_live" in $$source)) {
+            this["auto_show_on_live"] = false;
+        }
+        if (!("live_poll_interval" in $$source)) {
+            this["live_poll_interval"] = 15;
+        }
+        if (!("chat_log_enabled" in $$source)) {
+            this["chat_log_enabled"] = false;
+        }
+        if (!("chat_log_directory" in $$source)) {
+            this["chat_log_directory"] = "";
+        }
+        if (!("fullscreen_game_mode" in $$source)) {
+            this["fullscreen_game_mode"] = false;
+        }
+        if (!("fullscreen_game_executables" in $$source)) {
+            this["fullscreen_game_executables"] = [];
+        }
+        if (!("fullscreen_chat_x" in $$source)) {
+            this["fullscreen_chat_x"] = 20;
+        }
+        if (!("fullscreen_chat_y" in $$source)) {
+            this["fullscreen_chat_y"] = 20;
         }
 
         Object.assign(this, $$source);
