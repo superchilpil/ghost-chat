@@ -11,3 +11,5 @@ func showGhostChatWithoutActivating() bool { return false }
 func isGhostChatForeground() bool { return false }
 
 func isConfiguredGameRunning([]string) bool { return false }
+
+func listRunningExecutables() []string { return []string{} }
