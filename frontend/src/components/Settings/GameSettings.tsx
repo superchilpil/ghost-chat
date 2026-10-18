@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { GetRunningExecutables } from '@bindings/ghost-chat/app.js';
@@ -13,6 +13,12 @@ export function GameSettings() {
     const [selected, setSelected] = useState('');
     const [manual, setManual] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        void GetRunningExecutables()
+            .then((names) => setRunning([...names].sort((a, b) => a.localeCompare(b))))
+            .catch((error) => console.error('Failed to list running executables:', error));
+    }, []);
 
     const configured = config?.general?.fullscreen_game_executables ?? [];
 
