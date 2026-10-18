@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { GetRunningExecutables } from '@bindings/ghost-chat/app.js';
 import { useTranslation } from 'react-i18next';
 
 import { Toggle } from '@/components/Toggle';
@@ -9,7 +11,33 @@ export function GameSettings() {
     const config = useConfigStore((s) => s.config);
     const update = useConfigStore((s) => s.update);
     const [manual, setManual] = useState('');
+    const [runningExecutables, setRunningExecutables] = useState<string[]>([]);
+    const [selectedRunning, setSelectedRunning] = useState('');
+    const [loadingRunning, setLoadingRunning] = useState(false);
+    const [runningError, setRunningError] = useState(false);
     const configured = config?.general?.fullscreen_game_executables ?? [];
+
+    const refreshRunningExecutables = async () => {
+        setLoadingRunning(true);
+        setRunningError(false);
+        try {
+            const executables = await GetRunningExecutables();
+            setRunningExecutables([...new Set(executables)].sort((a, b) => a.localeCompare(b)));
+        } catch {
+            setRunningError(true);
+            setRunningExecutables([]);
+        } finally {
+            setLoadingRunning(false);
+        }
+    };
+
+    useEffect(() => {
+        void refreshRunningExecutables();
+    }, []);
+
+    const availableExecutables = runningExecutables.filter(
+        (name) => !configured.some((item) => item.toLowerCase() === name.toLowerCase()),
+    );
 
     const addExecutable = (value: string) => {
         const name = value.trim().split(/[\\/]/).pop() ?? '';
@@ -43,6 +71,42 @@ export function GameSettings() {
             </div>
 
             <span className="field-hint">{t('settings.games.hint')}</span>
+
+            <div className="field">
+                <label className="field-label">{t('settings.games.running_label')}</label>
+                <div className="field-row">
+                    <select
+                        value={selectedRunning}
+                        onChange={(event) => setSelectedRunning(event.target.value)}
+                        disabled={loadingRunning || availableExecutables.length === 0}
+                    >
+                        <option value="">
+                            {loadingRunning
+                                ? t('settings.games.loading_running')
+                                : availableExecutables.length === 0
+                                  ? t('settings.games.no_running')
+                                  : t('settings.games.running_placeholder')}
+                        </option>
+                        {availableExecutables.map((name) => (
+                            <option key={name} value={name}>{name}</option>
+                        ))}
+                    </select>
+                    <button className="btn btn-ghost" onClick={() => void refreshRunningExecutables()} disabled={loadingRunning}>
+                        {loadingRunning ? t('settings.games.refreshing') : t('settings.games.refresh')}
+                    </button>
+                    <button
+                        className="btn btn-ghost"
+                        disabled={!selectedRunning}
+                        onClick={() => {
+                            addExecutable(selectedRunning);
+                            setSelectedRunning('');
+                        }}
+                    >
+                        {t('settings.games.add_running')}
+                    </button>
+                </div>
+                {runningError && <span className="field-error">{t('settings.games.running_error')}</span>}
+            </div>
 
             <div className="field">
                 <label className="field-label">{t('settings.games.manual_exe')}</label>
