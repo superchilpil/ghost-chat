@@ -59,6 +59,7 @@ type App struct {
 	autoLiveWindowActive bool
 	fullscreenMu sync.Mutex
 	fullscreenGameActive bool
+	fullscreenGamePID uint32
 	fullscreenPreviousX int
 	fullscreenPreviousY int
 	fullscreenWasVanished bool
