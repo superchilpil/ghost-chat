@@ -431,6 +431,12 @@ func (a *App) GetConfig() *config.Config {
 	return a.config
 }
 
+// GetRunningExecutables returns the unique executable names of currently running
+// processes. The Windows implementation backs the Games settings picker.
+func (a *App) GetRunningExecutables() []string {
+	return listRunningExecutables()
+}
+
 func (a *App) UpdateConfig(cfg *config.Config) error {
 	a.configMu.Lock()
 
