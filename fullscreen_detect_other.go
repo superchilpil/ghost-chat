@@ -3,6 +3,8 @@
 package main
 
 func isFullscreenForegroundApp() bool { return false }
+func fullscreenForegroundProcessID() uint32 { return 0 }
+func fullscreenProcessRunning(uint32) bool { return false }
 
 func showGhostChatWithoutActivating() bool { return false }
 
