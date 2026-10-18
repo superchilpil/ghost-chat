@@ -926,6 +926,17 @@ func (a *App) ToggleVanish() {
 }
 
 func (a *App) setVanish(vanish bool, manual bool) {
+	// Keep the selected-game chat readable even if another workflow (such as
+	// auto-show-on-live) requests vanish mode while game placement is active.
+	if vanish {
+		a.fullscreenMu.Lock()
+		gameModeActive := a.fullscreenGameActive
+		a.fullscreenMu.Unlock()
+		if gameModeActive {
+			return
+		}
+	}
+
 	a.vanished = vanish
 
 	// A manual vanish is the user's chosen overlay position. Persist it
