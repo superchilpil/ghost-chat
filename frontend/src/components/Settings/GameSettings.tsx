@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { GetRunningExecutables } from '@bindings/ghost-chat/app.js';
 import { Toggle } from '@/components/Toggle';
 import { useConfigStore } from '@/stores/config';
 
@@ -9,30 +8,8 @@ export function GameSettings() {
     const { t } = useTranslation();
     const config = useConfigStore((s) => s.config);
     const update = useConfigStore((s) => s.update);
-    const [running, setRunning] = useState<string[]>([]);
-    const [selected, setSelected] = useState('');
     const [manual, setManual] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        void GetRunningExecutables()
-            .then((names) => setRunning([...names].sort((a, b) => a.localeCompare(b))))
-            .catch((error) => console.error('Failed to list running executables:', error));
-    }, []);
-
     const configured = config?.general?.fullscreen_game_executables ?? [];
-
-    const refreshRunning = async () => {
-        setLoading(true);
-        try {
-            const names = await GetRunningExecutables();
-            setRunning([...names].sort((a, b) => a.localeCompare(b)));
-        } catch (error) {
-            console.error('Failed to list running executables:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const addExecutable = (value: string) => {
         const name = value.trim().split(/[\\/]/).pop() ?? '';
@@ -44,7 +21,6 @@ export function GameSettings() {
         }
         void update({ general: { fullscreen_game_executables: [...configured, normalized] } });
         setManual('');
-        setSelected('');
     };
 
     const removeExecutable = (name: string) => {
@@ -67,24 +43,6 @@ export function GameSettings() {
             </div>
 
             <span className="field-hint">{t('settings.games.hint')}</span>
-
-            <div className="field">
-                <label className="field-label">{t('settings.games.running_apps')}</label>
-                <div className="field-row">
-                    <select value={selected} onChange={(event) => setSelected(event.target.value)}>
-                        <option value="">{t('settings.games.choose_running')}</option>
-                        {running.map((name) => (
-                            <option key={name} value={name}>{name}</option>
-                        ))}
-                    </select>
-                    <button className="btn btn-ghost" disabled={loading} onClick={() => void refreshRunning()}>
-                        {loading ? '…' : t('settings.games.refresh')}
-                    </button>
-                    <button className="btn btn-ghost" disabled={!selected} onClick={() => addExecutable(selected)}>
-                        {t('settings.games.add_selected')}
-                    </button>
-                </div>
-            </div>
 
             <div className="field">
                 <label className="field-label">{t('settings.games.manual_exe')}</label>
