@@ -916,6 +916,12 @@ func (a *App) ShrinkToChat() {
 }
 
 func (a *App) ToggleVanish() {
+	a.fullscreenMu.Lock()
+	fullscreenMode := a.fullscreenGameActive
+	a.fullscreenMu.Unlock()
+	if fullscreenMode {
+		return
+	}
 	a.setVanish(!a.vanished, true)
 }
 
