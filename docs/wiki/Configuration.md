@@ -48,3 +48,20 @@ Manually connecting to a channel does not automatically enable Auto Connect.
 Public prebuilt releases include the release API configuration.
 
 Users building Ghost Chat themselves must provide their own YouTube Data API v3 key through the `YOUTUBE_API_KEY` environment variable.
+
+
+## Windows game-aware chat placement
+
+The **Games** settings let you configure which running games should trigger the chat overlay's game mode.
+
+1. Open **Settings → Games**.
+2. Use the running-program list to select a game or executable.
+3. Refresh the list if the game was launched after opening Settings.
+4. Choose **Add Selected** to add it to the configured list.
+5. You can still type an executable name manually if it is not listed.
+
+The picker lists executable names for processes currently running on Windows. It does not automatically add every running process; you choose which ones should trigger game mode.
+
+When enabled, game mode moves Ghost Chat to a secondary monitor, keeps the overlay on top, and temporarily disables vanish/click-through while a configured game is running. When the configured game closes, Ghost Chat restores its previous position and vanish state. If the overlay was vanished before game mode began, it remains topmost after returning to its previous position.
+
+Game-aware placement is optional and disabled by default. Configure only the games you want to trigger it.
