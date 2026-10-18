@@ -53,6 +53,18 @@
             "press_keys": "Tastenkombination drücken...",
             "not_set": "Nicht gesetzt",
             "show_waiting_message": "Wartenachricht anzeigen",
+            "minimize_to_tray": "In den Infobereich minimieren",
+            "auto_show_on_live": "Bei Live-Start nach vorne bringen und Vanish aktivieren",
+            "fullscreen_game_mode": "Chatmodus für Vollbildspiele",
+            "fullscreen_game_mode_hint": "Wenn ein Vollbildspiel erkannt wird, wird Ghost Chat undurchsichtig auf Monitor 2 angezeigt. Ziehe das Fenster an die gewünschte Position; sie wird gespeichert. Beim Verlassen des Vollbildmodus werden Position und Vanish-Zustand wiederhergestellt.",
+            "live_poll_interval": "Intervall der Live-Erkennung",
+            "chat_log_section": "Chat-Protokoll",
+            "chat_log_hint": "Speichert Nachrichten aller verbundenen Dienste in einem Sitzungsprotokoll.",
+            "chat_log_enabled": "Chat-Protokoll aktivieren",
+            "chat_log_location": "Speicherort des Chat-Protokolls",
+            "chat_log_placeholder": "Ordner für Chat-Protokolle auswählen",
+            "chat_log_browse": "Durchsuchen",
+            "chat_log_location_hint": "Chat-Protokolle werden nur gespeichert, wenn die Funktion aktiviert ist.",
             "hotkey_hint": "Erfordert Strg, Alt oder Shift plus eine weitere Taste. Z.B. Strg+Shift+V"
         },
         "platform": {
