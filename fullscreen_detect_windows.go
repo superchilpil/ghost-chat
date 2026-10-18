@@ -21,6 +21,7 @@ var (
 	procCloseHandle = fullscreenKernel32.NewProc("CloseHandle")
 
 	fullscreenHWNDTopmost = ^uintptr(0)
+	fullscreenHWNDNotopmost = ^uintptr(1)
 )
 
 const (
@@ -42,6 +43,26 @@ type fullscreenProcessEntry32 struct {
 	BasePriority    int32
 	Flags           uint32
 	ExeFile         [260]uint16
+}
+
+// setGhostChatAlwaysOnTop toggles topmost state without activating the chat.
+// Game mode enables it; leaving game mode explicitly restores normal z-order.
+func setGhostChatAlwaysOnTop(enabled bool) bool {
+	title, err := syscall.UTF16PtrFromString("ghost-chat")
+	if err != nil {
+		return false
+	}
+	hwnd, _, _ := procFindWindow.Call(0, uintptr(unsafe.Pointer(title)))
+	if hwnd == 0 {
+		return false
+	}
+	insertAfter := fullscreenHWNDNotopmost
+	if enabled {
+		insertAfter = fullscreenHWNDTopmost
+	}
+	flags := uintptr(fullscreenSWPNosize | fullscreenSWPNomove | fullscreenSWPNoactivate)
+	ok, _, _ := procSetWindowPos.Call(hwnd, insertAfter, 0, 0, 0, 0, flags)
+	return ok != 0
 }
 
 // showGhostChatWithoutActivating makes the overlay visible without stealing
