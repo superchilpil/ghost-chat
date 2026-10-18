@@ -57,6 +57,14 @@ type App struct {
 	lastW, lastH     int
 	updateAvailable bool
 	autoLiveWindowActive bool
+	fullscreenMu sync.Mutex
+	fullscreenGameActive bool
+	fullscreenPreviousX int
+	fullscreenPreviousY int
+	fullscreenWasVanished bool
+	fullscreenTargetX int
+	fullscreenTargetY int
+	fullscreenSaveTimer *time.Timer
 }
 
 func NewApp(cfg *config.Config, configPath string, version string) *App {
@@ -349,7 +357,7 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 	})
 
 	a.window.OnWindowEvent(events.Common.WindowDidMove, func(e *application.WindowEvent) {
-		a.lastX, a.lastY = a.window.Position()
+		a.handleWindowMoved()
 	})
 
 	a.window.OnWindowEvent(events.Common.WindowDidResize, func(e *application.WindowEvent) {
@@ -366,6 +374,7 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 
 	go a.restoreTwitchAuth()
 	go a.startLiveMonitor()
+	go a.startFullscreenGameMonitor()
 
 	return nil
 }
@@ -428,6 +437,7 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	oldConfig := a.config
 	oldKeybind := a.config.Keybinds.Vanish.Keybind
 	oldChatLogEnabled := a.config.General.ChatLogEnabled
+	oldFullscreenGameMode := a.config.General.FullscreenGameMode
 	account := a.config.Twitch.Account
 
 	a.config = cfg
@@ -446,6 +456,10 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	}
 
 	a.configMu.Unlock()
+
+	if oldFullscreenGameMode && !cfg.General.FullscreenGameMode {
+		a.exitFullscreenGameMode()
+	}
 
 	if oldChatLogEnabled && !cfg.General.ChatLogEnabled {
 		a.chatLog.Close()
