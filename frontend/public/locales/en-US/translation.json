@@ -44,7 +44,8 @@
             "twitch": "Twitch",
             "youtube": "YouTube",
             "kick": "Kick",
-            "themes": "Themes"
+            "themes": "Themes",
+            "games": "Games"
         },
         "general": {
             "language": "Language",
@@ -55,8 +56,7 @@
             "show_waiting_message": "Show Waiting Message",
             "minimize_to_tray": "Minimize to Tray",
             "auto_show_on_live": "Bring to Front and Vanish When Live",
-            "fullscreen_game_mode": "Fullscreen Game Chat Mode",
-            "fullscreen_game_mode_hint": "When a fullscreen game is detected, show Ghost Chat opaquely on monitor 2. Drag it to adjust and save its position; your previous position and vanish state return when the game exits fullscreen.",
+
             "hotkey_hint": "Requires one of Ctrl, Alt, or Shift plus another key. E.g. Ctrl+Shift+V",
             "live_poll_interval": "Live Detection Poll Interval",
             "live_poll_interval_hint": "How often Ghost Chat checks configured channels for live status.",
@@ -67,6 +67,23 @@
             "chat_log_placeholder": "Choose a folder for chat logs",
             "chat_log_browse": "Browse",
             "chat_log_location_hint": "Chat logs are only written when logging is enabled."
+        },
+        "games": {
+            "title": "Game-Specific Chat Placement",
+            "description": "Only games listed here can trigger this behavior. Ghost Chat checks every 2 seconds while this setting is enabled; borderless games not on this list are unaffected.",
+            "enable": "Enable game-specific placement",
+            "running_apps": "Running executables",
+            "refresh": "Refresh list",
+            "choose_running": "Select a running executable...",
+            "add_selected": "Add selected",
+            "manual_exe": "Executable filename",
+            "manual_placeholder": "e.g. FortniteClient-Win64-Shipping.exe",
+            "add": "Add executable",
+            "configured": "Configured games",
+            "empty": "No games added yet.",
+            "remove": "Remove",
+            "hint": "When any configured executable is running, Ghost Chat moves to monitor 2, exits vanish mode, and stays opaque. When all configured games close, its previous position and vanish state are restored.",
+            "error_load": "Could not read running executables."
         },
         "platform": {
             "default_channel": "Default Channel",
