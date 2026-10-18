@@ -58,6 +58,8 @@ This fork adds a background/live-stream workflow and other improvements:
 - **YouTube API safety limit** - Ghost Chat allows up to 5 YouTube Data API requests per day per installation, then automatically falls back to Innertube.
 - **YouTube Auto Connect efficiency** - Live detection uses YouTube's public live/watch pages instead of spending Data API quota on every polling check.
 - **Windows system tray integration** - Tray controls for opening/closing Ghost Chat, centering the window, toggling vanish mode, opening the config folder, and quitting.
+- **Game-aware chat placement (Windows)** - Optionally move the chat overlay to a secondary monitor and keep it on top while selected games are running, then restore its previous position and vanish state when they close.
+- **Running-game picker** - In Settings → Games, refresh a list of currently running executables and add one to the game list without typing its process name. Manual entry remains available.
 - **Persistent settings** - Configuration, window state, Auto Connect settings, themes, chat log settings, and other preferences are saved between launches.
 - **Configurable chat logs** - Optionally save all connected Twitch, YouTube, and Kick chat into one readable session transcript in a user-selected folder. Logs include the stream title when available, start/end times, service prefixes (`Y`, `T`, `K`), and emoji descriptors such as `:thumbs up:`. Messages are archived when received and remain in the log even if they are later deleted by a moderator.
 
