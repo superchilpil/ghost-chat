@@ -107,6 +107,7 @@ func (a *App) exitFullscreenGameMode() {
 	}
 	x, y := a.fullscreenPreviousX, a.fullscreenPreviousY
 	restoreVanish := a.fullscreenWasVanished
+	targetX, targetY := a.fullscreenTargetX, a.fullscreenTargetY
 	a.fullscreenGameActive = false
 	if a.fullscreenSaveTimer != nil {
 		a.fullscreenSaveTimer.Stop()
@@ -114,11 +115,15 @@ func (a *App) exitFullscreenGameMode() {
 	}
 	a.fullscreenMu.Unlock()
 
-	a.configMu.Lock()
-	if err := config.Save(a.config, a.configPath); err != nil {
-		println("Failed to save fullscreen chat position:", err.Error())
+	if area, ok := a.secondaryWorkArea(); ok {
+		a.configMu.Lock()
+		a.config.General.FullscreenChatX = targetX - area.X
+		a.config.General.FullscreenChatY = targetY - area.Y
+		if err := config.Save(a.config, a.configPath); err != nil {
+			println("Failed to save fullscreen chat position:", err.Error())
+		}
+		a.configMu.Unlock()
 	}
-	a.configMu.Unlock()
 
 	a.window.SetPosition(x, y)
 	a.setVanish(restoreVanish, false)
