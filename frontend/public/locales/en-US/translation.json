@@ -55,6 +55,8 @@
             "show_waiting_message": "Show Waiting Message",
             "minimize_to_tray": "Minimize to Tray",
             "auto_show_on_live": "Bring to Front and Vanish When Live",
+            "fullscreen_game_mode": "Fullscreen Game Chat Mode",
+            "fullscreen_game_mode_hint": "When a fullscreen game is detected, show Ghost Chat opaquely on monitor 2. Drag it to adjust and save its position; your previous position and vanish state return when the game exits fullscreen.",
             "hotkey_hint": "Requires one of Ctrl, Alt, or Shift plus another key. E.g. Ctrl+Shift+V",
             "live_poll_interval": "Live Detection Poll Interval",
             "live_poll_interval_hint": "How often Ghost Chat checks configured channels for live status.",
