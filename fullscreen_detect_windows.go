@@ -19,6 +19,7 @@ var (
 	procFindWindow = fullscreenUser32.NewProc("FindWindowW")
 	procShowWindow = fullscreenUser32.NewProc("ShowWindow")
 	procSetWindowPos = fullscreenUser32.NewProc("SetWindowPos")
+	fullscreenHWNDTopmost = ^uintptr(0)
 )
 
 type fullscreenRect struct {
@@ -89,7 +90,6 @@ func abs32(v int32) int32 {
 
 const (
 	fullscreenSWShownoactivate = 4
-	fullscreenHWNDTopmost      = ^uintptr(0)
 	fullscreenSWPNosize        = 0x0001
 	fullscreenSWPNomove        = 0x0002
 	fullscreenSWPNoactivate    = 0x0010
