@@ -33,7 +33,7 @@ func (a *App) startFullscreenGameMonitor() {
 
 		gameRunning := enabled && isConfiguredGameRunning(executables)
 		if gameRunning && !active {
-			a.enterFullscreenGameMode(0)
+			a.enterFullscreenGameMode()
 		} else if !gameRunning && active {
 			a.exitFullscreenGameMode()
 		}
@@ -59,7 +59,7 @@ func (a *App) secondaryWorkArea() (application.Rect, bool) {
 	return application.Rect{}, false
 }
 
-func (a *App) enterFullscreenGameMode(gamePID uint32) {
+func (a *App) enterFullscreenGameMode() {
 	if a.window == nil {
 		return
 	}
@@ -81,7 +81,6 @@ func (a *App) enterFullscreenGameMode(gamePID uint32) {
 		return
 	}
 	a.fullscreenPreviousX, a.fullscreenPreviousY = x, y
-	a.fullscreenGamePID = gamePID
 	a.fullscreenWasVanished = a.vanished
 	a.fullscreenTargetX, a.fullscreenTargetY = targetX, targetY
 	a.fullscreenGameActive = true
@@ -110,7 +109,6 @@ func (a *App) exitFullscreenGameMode() {
 	restoreVanish := a.fullscreenWasVanished
 	targetX, targetY := a.fullscreenTargetX, a.fullscreenTargetY
 	a.fullscreenGameActive = false
-	a.fullscreenGamePID = 0
 	if a.fullscreenSaveTimer != nil {
 		a.fullscreenSaveTimer.Stop()
 		a.fullscreenSaveTimer = nil
