@@ -24,31 +24,17 @@ func (a *App) startFullscreenGameMonitor() {
 	for range ticker.C {
 		a.configMu.Lock()
 		enabled := a.config.General.FullscreenGameMode
+		executables := append([]string(nil), a.config.General.FullscreenGameExecutables...)
 		a.configMu.Unlock()
 
 		a.fullscreenMu.Lock()
 		active := a.fullscreenGameActive
 		a.fullscreenMu.Unlock()
 
-		pid := fullscreenForegroundProcessID()
-		if enabled && pid != 0 {
-			if !active {
-				a.enterFullscreenGameMode(pid)
-			} else {
-				a.fullscreenMu.Lock()
-				a.fullscreenGamePID = pid
-				a.fullscreenMu.Unlock()
-			}
-		} else if active {
-			// Keep game mode active while the user drags the chat window to
-			// calibrate its saved position. If the game process exits while
-			// chat has focus, restore the prior window state as well.
-			a.fullscreenMu.Lock()
-			pid := a.fullscreenGamePID
-			a.fullscreenMu.Unlock()
-			if isGhostChatForeground() && fullscreenProcessRunning(pid) {
-				continue
-			}
+		gameRunning := enabled && isConfiguredGameRunning(executables)
+		if gameRunning && !active {
+			a.enterFullscreenGameMode(0)
+		} else if !gameRunning && active {
 			a.exitFullscreenGameMode()
 		}
 	}
