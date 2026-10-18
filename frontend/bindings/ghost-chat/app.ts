@@ -41,8 +41,12 @@ export function ExportTheme(filename: string, content: string): $CancellableProm
 
 export function GetConfig(): $CancellablePromise<config$0.Config | null> {
     return $Call.ByID(1200034045).then(($result: any) => {
-        return $$createType1($result);
+        return $createType1($result);
     });
+}
+
+export function GetRunningExecutables(): $CancellablePromise<string[]> {
+    return $Call.ByID(1987937543);
 }
 
 export function OpenConfigFolder(): $CancellablePromise<void> {
