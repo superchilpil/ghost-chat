@@ -50,6 +50,13 @@
         "general": {
             "language": "Sprache",
             "show_timestamps": "Zeitstempel anzeigen",
+            "chat_animation_section": "Animation neuer Nachrichten",
+            "chat_animation_hint": "Neue Chat-Nachrichten beim Erscheinen animieren.",
+            "chat_animation_enabled": "Nachrichtenanimation aktivieren",
+            "chat_animation_style": "Animationsrichtung",
+            "chat_animation_left": "Von links einschieben",
+            "chat_animation_right": "Von rechts einschieben",
+            "chat_animation_bottom": "Von unten einschieben",
             "vanish_hotkey": "Vanish-Tastenkombination",
             "press_keys": "Tastenkombination drücken...",
             "not_set": "Nicht gesetzt",
