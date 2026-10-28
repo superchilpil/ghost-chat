@@ -117,6 +117,8 @@ export class General {
      */
     "language": string;
     "show_timestamps": boolean;
+    "chat_entry_animation_enabled": boolean;
+    "chat_entry_animation": string;
     "show_waiting_message": boolean;
     "minimize_to_tray": boolean;
     "auto_show_on_live": boolean;
@@ -133,9 +135,11 @@ export class General {
         if (!("language" in $$source)) {
             this["language"] = "";
         }
-        if (!("show_timestamps" in $$source)) {
+        if (!("show_timestamps" in $source)) {
             this["show_timestamps"] = false;
         }
+        if (!("chat_entry_animation_enabled" in $source)) { this["chat_entry_animation_enabled"] = false; }
+        if (!("chat_entry_animation" in $source)) { this["chat_entry_animation"] = "left"; }
         if (!("show_waiting_message" in $$source)) {
             this["show_waiting_message"] = false;
         }
