@@ -50,6 +50,13 @@
         "general": {
             "language": "Language",
             "show_timestamps": "Show Timestamps",
+            "chat_animation_section": "New Message Animation",
+            "chat_animation_hint": "Animate each new chat message as it appears.",
+            "chat_animation_enabled": "Enable message animation",
+            "chat_animation_style": "Animation direction",
+            "chat_animation_left": "Slide in from left",
+            "chat_animation_right": "Slide in from right",
+            "chat_animation_bottom": "Slide up from bottom",
             "vanish_hotkey": "Vanish Hotkey",
             "press_keys": "Press a key combination...",
             "not_set": "Not set",
