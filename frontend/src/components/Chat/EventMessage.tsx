@@ -11,6 +11,7 @@ import { renderFragments } from './renderFragments';
 interface Props {
     message: ChatMessageType;
     showTimestamp?: boolean;
+    entryAnimation?: string;
     fade?: boolean;
     fadeTimeout?: number;
     onFaded?: (id: string) => void;
@@ -34,7 +35,7 @@ const EVENT_ACCENT_CLASS: Record<ReturnType<typeof classifyEvent>, string> = {
     other: styles.other,
 };
 
-export function EventMessage({ message, showTimestamp, fade, fadeTimeout, onFaded }: Props) {
+export function EventMessage({ message, showTimestamp, entryAnimation, fade, fadeTimeout, onFaded }: Props) {
     const { t } = useTranslation();
     const [fading, setFading] = useState(false);
 
@@ -68,7 +69,7 @@ export function EventMessage({ message, showTimestamp, fade, fadeTimeout, onFade
 
     return (
         <div
-            className={`${styles.event} ${accentClass} ${fading ? styles.fade : ''}`}
+            className={`${styles.event} ${accentClass} ${entryAnimation === 'right' ? styles.enterRight : entryAnimation === 'bottom' ? styles.enterBottom : entryAnimation === 'left' ? styles.enterLeft : ''} ${fading ? styles.fade : ''}`
             onAnimationEnd={handleAnimationEnd}
         >
             {showTimestamp && message.timestamp && (
