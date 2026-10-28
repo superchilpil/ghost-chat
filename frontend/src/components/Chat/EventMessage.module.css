@@ -71,3 +71,12 @@
         opacity: 0;
     }
 }
+
+
+.enterLeft { animation: slideInLeft 320ms ease-out both; }
+.enterRight { animation: slideInRight 320ms ease-out both; }
+.enterBottom { animation: slideInBottom 320ms ease-out both; }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInBottom { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .enterLeft, .enterRight, .enterBottom { animation: none; } }
