@@ -13,6 +13,7 @@ interface Props {
     showPlatformIcon?: boolean;
     showColon?: boolean;
     showAvatars?: boolean;
+    entryAnimation?: string;
     fade?: boolean;
     fadeTimeout?: number;
     onFaded?: (id: string) => void;
@@ -136,6 +137,7 @@ export function ChatMessage({
     showPlatformIcon,
     showColon = true,
     showAvatars = true,
+    entryAnimation,
     fade,
     fadeTimeout,
     onFaded,
@@ -157,7 +159,8 @@ export function ChatMessage({
     };
 
     const pc = platformClass(message.platform);
-    const wrapperClass = `${styles.message} ${pc} ${fading ? styles.fade : ''}`;
+    const entryClass = entryAnimation === 'right' ? styles.enterRight : entryAnimation === 'bottom' ? styles.enterBottom : entryAnimation === 'left' ? styles.enterLeft : '';
+    const wrapperClass = `${styles.message} ${pc} ${entryClass} ${fading ? styles.fade : ''}`;
     const body =
         message.fragments && message.fragments.length > 0 ? (
             renderFragments(message.fragments)
@@ -172,7 +175,7 @@ export function ChatMessage({
 
         return (
             <div
-                className={`${styles.message} ${styles.superChatWrapper} ${pc} ${fading ? styles.fade : ''}`}
+                className={`${styles.message} ${styles.superChatWrapper} ${pc} ${entryClass} ${fading ? styles.fade : ''}`}
                 onAnimationEnd={handleAnimationEnd}
             >
                 <div
@@ -204,7 +207,7 @@ export function ChatMessage({
     if (message.membershipEvent) {
         return (
             <div
-                className={`${styles.message} ${styles.membershipWrapper} ${pc} ${fading ? styles.fade : ''}`}
+                className={`${styles.message} ${styles.membershipWrapper} ${pc} ${entryClass} ${fading ? styles.fade : ''}`}
                 onAnimationEnd={handleAnimationEnd}
             >
                 <BadgeList
