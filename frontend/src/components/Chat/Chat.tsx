@@ -305,6 +305,7 @@ export function Chat() {
                                   key={msg.id}
                                   message={msg}
                                   showTimestamp={showTimestamp}
+                                  entryAnimation={config?.general?.chat_entry_animation_enabled ? config.general.chat_entry_animation ?? 'left' : undefined}
                                   fade={fade}
                                   fadeTimeout={timeoutSeconds}
                                   onFaded={(id) => setMessages((prev) => prev.filter((m) => m.id !== id))}
@@ -318,6 +319,7 @@ export function Chat() {
                                   showPlatformIcon={connectedCount > 1}
                                   showColon={theme.show_colon}
                                   showAvatars={theme.show_avatars}
+                                  entryAnimation={config?.general?.chat_entry_animation_enabled ? config.general.chat_entry_animation ?? 'left' : undefined}
                                   fade={fade}
                                   fadeTimeout={timeoutSeconds}
                                   onFaded={(id) => setMessages((prev) => prev.filter((m) => m.id !== id))}
