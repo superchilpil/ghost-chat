@@ -16,6 +16,8 @@ type WindowState struct {
 type General struct {
 	Language           string `json:"language"` // default "en-US"
 	ShowTimestamps     bool   `json:"show_timestamps"`
+	ChatEntryAnimationEnabled bool `json:"chat_entry_animation_enabled"`
+	ChatEntryAnimation string `json:"chat_entry_animation"`
 	ShowWaitingMessage bool   `json:"show_waiting_message"`
 	MinimizeToTray    bool   `json:"minimize_to_tray"`
 	AutoShowOnLive    bool   `json:"auto_show_on_live"`
