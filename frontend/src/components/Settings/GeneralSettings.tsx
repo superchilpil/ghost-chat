@@ -41,6 +41,22 @@ export function GeneralSettings() {
                 </select>
             </div>
 
+            <div className="field-section">
+                <label className="field-section-label">{t('settings.general.chat_animation_section')}</label>
+                <span className="field-hint">{t('settings.general.chat_animation_hint')}</span>
+            </div>
+            <div className="field-row">
+                <label className="field-label">{t('settings.general.chat_animation_enabled')}</label>
+                <Toggle checked={config?.general?.chat_entry_animation_enabled ?? false} onChange={(v) => void update({ general: { chat_entry_animation_enabled: v } })} />
+            </div>
+            <div className="field">
+                <label className="field-label">{t('settings.general.chat_animation_style')}</label>
+                <select value={config?.general?.chat_entry_animation ?? 'left'} onChange={(e) => void update({ general: { chat_entry_animation: e.target.value } })} disabled={!(config?.general?.chat_entry_animation_enabled ?? false)}>
+                    <option value="left">{t('settings.general.chat_animation_left')}</option>
+                    <option value="right">{t('settings.general.chat_animation_right')}</option>
+                    <option value="bottom">{t('settings.general.chat_animation_bottom')}</option>
+                </select>
+            </div>
             <div className="field-row">
                 <label className="field-label">{t('settings.general.show_timestamps')}</label>
                 <Toggle
