@@ -138,6 +138,7 @@ func DefaultConfig() Config {
 		},
 		General: General{
 			Language:           "en-US",
+			ChatEntryAnimation: "left",
 			ShowWaitingMessage: true,
 			ChatLogDirectory:   defaultChatLogDirectory(),
 			FullscreenChatX:    20,
