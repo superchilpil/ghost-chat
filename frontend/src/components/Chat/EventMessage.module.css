@@ -80,3 +80,6 @@
 @keyframes slideInRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideInBottom { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .enterLeft, .enterRight, .enterBottom { animation: none; } }
+
+/* Keep message expiry animation higher priority than the entry animation. */
+.fade { animation: fadeOut 1s ease forwards; }
