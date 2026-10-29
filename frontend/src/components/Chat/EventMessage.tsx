@@ -69,7 +69,7 @@ export function EventMessage({ message, showTimestamp, entryAnimation, fade, fad
 
     return (
         <div
-            className={`${styles.event} ${accentClass} ${entryAnimation === 'right' ? styles.enterRight : entryAnimation === 'bottom' ? styles.enterBottom : entryAnimation === 'left' ? styles.enterLeft : ''} ${fading ? styles.fade : ''}`
+            className={`${styles.event} ${accentClass} ${entryAnimation === 'right' ? styles.enterRight : entryAnimation === 'bottom' ? styles.enterBottom : entryAnimation === 'left' ? styles.enterLeft : ''} ${fading ? styles.fade : ''}`}
             onAnimationEnd={handleAnimationEnd}
         >
             {showTimestamp && message.timestamp && (
