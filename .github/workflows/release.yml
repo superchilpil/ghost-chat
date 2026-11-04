@@ -80,7 +80,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
 
-      - name: Encrypt release credentials
+      - name: Prepare release credentials
         run: go run ./cmd/secretpack
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
