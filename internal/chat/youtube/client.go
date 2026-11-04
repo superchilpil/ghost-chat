@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"ghost-chat/internal/chat"
-	"ghost-chat/internal/buildconfig"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -76,7 +75,7 @@ type Client struct {
 
 func NewClient(onMessage MessageHandler, onEvent EventHandler) *Client {
 	return &Client{
-		apiKey:    strings.TrimSpace(buildconfig.YouTubeAPIKey),
+		apiKey:    "",
 		OnMessage: onMessage,
 		OnEvent:   onEvent,
 		seenIDs:   make(map[string]struct{}),
@@ -99,9 +98,6 @@ func (c *Client) streamListIsAllowed() bool {
 func (c *Client) SetAPIKey(apiKey string) {
 	c.mu.Lock()
 	apiKey = strings.TrimSpace(apiKey)
-	if apiKey == "" {
-		apiKey = strings.TrimSpace(buildconfig.YouTubeAPIKey)
-	}
 	c.apiKey = apiKey
 	c.mu.Unlock()
 }
