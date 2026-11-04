@@ -24,8 +24,6 @@ export function YouTubeSettings() {
 
     const set = (partial: DeepPartial<YouTubeConfig>) => update({ youtube: partial });
 
-;
-
     const handleAutoDetect = async () => {
         if (!channelText) {
             return;
