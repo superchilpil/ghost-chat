@@ -7,13 +7,13 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"os"
 )
 
-func derive(seed []byte, label byte) []byte {
-	mac := hmac.New(sha256.New, seed)
+func derive(digest []byte, label byte) []byte {
+	mac := hmac.New(sha256.New, digest)
 	mac.Write([]byte{label, 0x01})
 	return mac.Sum(nil)
 }
@@ -32,7 +32,7 @@ func encrypt(value string, key []byte) (string, string, error) {
 		return "", "", err
 	}
 	ciphertext := gcm.Seal(nil, nonce, []byte(value), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), base64.StdEncoding.EncodeToString(nonce), nil
+	return hex.EncodeToString(ciphertext), hex.EncodeToString(nonce), nil
 }
 
 func main() {
@@ -54,9 +54,14 @@ func main() {
 		fmt.Println("Credential plaintext scan passed.")
 		return
 	}
-	assetKey := os.Getenv("ASSET_ENCRYPTION_KEY")
-	if api == "" || password == "" || assetKey == "" {
+	checksum := os.Getenv("ASSET_ENCRYPTION_KEY")
+	if api == "" || password == "" || checksum == "" {
 		fmt.Fprintln(os.Stderr, "required build secrets are missing")
+		os.Exit(2)
+	}
+	expected, err := hex.DecodeString(checksum)
+	if err != nil || len(expected) != sha256.Size {
+		fmt.Fprintln(os.Stderr, "ASSET_ENCRYPTION_KEY must be a 64-character SHA-256 hex digest")
 		os.Exit(2)
 	}
 	asset, err := os.ReadFile("build/appicon.png")
@@ -65,20 +70,21 @@ func main() {
 		os.Exit(2)
 	}
 	digest := sha256.Sum256(asset)
-	mac := hmac.New(sha256.New, []byte(assetKey))
-	mac.Write(digest[:])
-	seed := mac.Sum(nil)
-	encAPI, nonceAPI, err := encrypt(api, derive(seed, 0x41))
+	if !hmac.Equal(digest[:], expected) {
+		fmt.Fprintln(os.Stderr, "asset checksum does not match ASSET_ENCRYPTION_KEY")
+		os.Exit(2)
+	}
+	encAPI, nonceAPI, err := encrypt(api, derive(digest[:], 0x41))
 	if err != nil {
 		panic(err)
 	}
-	encPassword, noncePassword, err := encrypt(password, derive(seed, 0x42))
+	encPassword, noncePassword, err := encrypt(password, derive(digest[:], 0x42))
 	if err != nil {
 		panic(err)
 	}
 	source := fmt.Sprintf(
-		"package buildconfig\nfunc init(){ expectedDigest=%q; assetKeySeed=%q; encryptedAPIKey=%q; apiNonce=%q; encryptedBypassPassword=%q; bypassNonce=%q }\n",
-		base64.StdEncoding.EncodeToString(digest[:]), base64.StdEncoding.EncodeToString(seed), encAPI, nonceAPI, encPassword, noncePassword,
+		"package buildconfig\nfunc init(){ expectedDigest=%q; encryptedAPIKey=%q; apiNonce=%q; encryptedBypassPassword=%q; bypassNonce=%q }\n",
+		checksum, encAPI, nonceAPI, encPassword, noncePassword,
 	)
 	if err := os.WriteFile("internal/buildconfig/secrets_generated.go", []byte(source), 0600); err != nil {
 		panic(err)
