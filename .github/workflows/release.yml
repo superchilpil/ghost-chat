@@ -84,8 +84,6 @@ jobs:
         run: wails3 task build
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
       - name: Install NSIS
         shell: powershell
@@ -221,7 +219,7 @@ jobs:
 
             ### Self-building
 
-            Users who build Ghost Chat themselves must provide their own **YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable. The public prebuilt release includes the release API configuration, so normal users do not need to configure an API key.
+            Users who build Ghost Chat themselves must provide their own **YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable. Prebuilt releases do not contain a shared YouTube API key. YouTube chat uses the unauthenticated Innertube fallback by default. Users who choose to supply their own YouTube Data API v3 key can configure it locally; it is stored in their user configuration and is never embedded in the executable.
 
             ### Installation / Usage / Bug reporting
 
