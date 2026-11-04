@@ -5,16 +5,16 @@ import (
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"strings"
 )
 
-var encryptedAPIKey, encryptedBypassPassword, apiNonce, bypassNonce, expectedDigest, assetKeySeed string
+var encryptedAPIKey, encryptedBypassPassword, apiNonce, bypassNonce, expectedDigest string
 var apiKeyValue, bypassPasswordValue string
 
-func derive(seed []byte, label byte) []byte {
-	mac := hmac.New(sha256.New, seed)
+func derive(digest []byte, label byte) []byte {
+	mac := hmac.New(sha256.New, digest)
 	mac.Write([]byte{label, 0x01})
 	return mac.Sum(nil)
 }
@@ -31,11 +31,11 @@ func decrypt(value, nonce string, key []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ciphertext, err := base64.StdEncoding.DecodeString(value)
+	ciphertext, err := hex.DecodeString(value)
 	if err != nil {
 		return "", err
 	}
-	iv, err := base64.StdEncoding.DecodeString(nonce)
+	iv, err := hex.DecodeString(nonce)
 	if err != nil {
 		return "", err
 	}
@@ -47,23 +47,19 @@ func decrypt(value, nonce string, key []byte) (string, error) {
 }
 
 func Initialize(asset []byte) error {
-	if len(asset) == 0 || expectedDigest == "" || assetKeySeed == "" {
+	if len(asset) == 0 || expectedDigest == "" {
 		return errors.New("invalid state")
 	}
 	digest := sha256.Sum256(asset)
-	expected, err := base64.StdEncoding.DecodeString(expectedDigest)
-	if err != nil || !hmac.Equal(digest[:], expected) {
+	expected, err := hex.DecodeString(expectedDigest)
+	if err != nil || len(expected) != sha256.Size || !hmac.Equal(digest[:], expected) {
 		return errors.New("invalid state")
 	}
-	seed, err := base64.StdEncoding.DecodeString(assetKeySeed)
-	if err != nil || len(seed) != sha256.Size {
-		return errors.New("invalid state")
-	}
-	api, err := decrypt(encryptedAPIKey, apiNonce, derive(seed, 0x41))
+	api, err := decrypt(encryptedAPIKey, apiNonce, derive(digest[:], 0x41))
 	if err != nil || api == "" {
 		return errors.New("invalid state")
 	}
-	password, err := decrypt(encryptedBypassPassword, bypassNonce, derive(seed, 0x42))
+	password, err := decrypt(encryptedBypassPassword, bypassNonce, derive(digest[:], 0x42))
 	if err != nil || password == "" {
 		return errors.New("invalid state")
 	}
