@@ -96,8 +96,6 @@ jobs:
         run: wails3 task package FORMAT=nsis
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
       - name: Prepare Windows release assets
         shell: bash
