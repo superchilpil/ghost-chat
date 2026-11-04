@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"ghost-chat/internal/buildconfig"
 	"ghost-chat/internal/config"
 	"ghost-chat/internal/singleinstance"
 	"os"
@@ -23,6 +25,11 @@ var appIcon []byte
 var version = "dev"
 
 func main() {
+	if err := buildconfig.Initialize(appIcon); err != nil {
+		fmt.Fprintln(os.Stderr, "Error")
+		os.Exit(1)
+	}
+
 	if single, err := singleinstance.Acquire(); err != nil {
 		println("Error acquiring Ghost Chat instance lock:", err.Error())
 		return
@@ -73,7 +80,7 @@ func main() {
 		Name: "Ghost Chat",
 		Icon: appIcon,
 		Windows: application.WindowsOptions{
-			WebviewUserDataPath: webviewUserDataPath,
+			WebviewUserDataPath:            webviewUserDataPath,
 			DisableQuitOnLastWindowClosed: true,
 		},
 		ShouldQuit: func() bool {
@@ -113,9 +120,6 @@ func main() {
 	tray := app.SystemTray.New()
 	tray.SetTemplateIcon(trayIcon)
 	tray.SetTooltip("Ghost Chat " + version)
-	// Let Wails manage the tray/window relationship. This keeps the window
-	// hidden without affecting the background Go services and gives the tray
-	// icon the native show/hide behavior.
 	tray.AttachWindow(win)
 
 	menu := app.NewMenu()
