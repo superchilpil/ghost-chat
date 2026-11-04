@@ -10,17 +10,13 @@ import (
 	"strings"
 )
 
-var encryptedAPIKey, encryptedBypassPassword, apiNonce, bypassNonce, expectedDigest string
+var encryptedAPIKey, encryptedBypassPassword, apiNonce, bypassNonce, expectedDigest, assetKeySeed string
 var apiKeyValue, bypassPasswordValue string
 
-func derive(digest []byte, label byte) []byte {
-	salt := []byte{0x47, 0x43, 0x48, 0x54, 0x2d, 0x31}
-	extract := hmac.New(sha256.New, salt)
-	extract.Write(digest)
-	prk := extract.Sum(nil)
-	expand := hmac.New(sha256.New, prk)
-	expand.Write([]byte{label, 0x01})
-	return expand.Sum(nil)
+func derive(seed []byte, label byte) []byte {
+	mac := hmac.New(sha256.New, seed)
+	mac.Write([]byte{label, 0x01})
+	return mac.Sum(nil)
 }
 
 func decrypt(value, nonce string, key []byte) (string, error) {
@@ -51,7 +47,7 @@ func decrypt(value, nonce string, key []byte) (string, error) {
 }
 
 func Initialize(asset []byte) error {
-	if len(asset) == 0 || expectedDigest == "" {
+	if len(asset) == 0 || expectedDigest == "" || assetKeySeed == "" {
 		return errors.New("invalid state")
 	}
 	digest := sha256.Sum256(asset)
@@ -59,11 +55,15 @@ func Initialize(asset []byte) error {
 	if err != nil || !hmac.Equal(digest[:], expected) {
 		return errors.New("invalid state")
 	}
-	api, err := decrypt(encryptedAPIKey, apiNonce, derive(digest[:], 0x41))
+	seed, err := base64.StdEncoding.DecodeString(assetKeySeed)
+	if err != nil || len(seed) != sha256.Size {
+		return errors.New("invalid state")
+	}
+	api, err := decrypt(encryptedAPIKey, apiNonce, derive(seed, 0x41))
 	if err != nil || api == "" {
 		return errors.New("invalid state")
 	}
-	password, err := decrypt(encryptedBypassPassword, bypassNonce, derive(digest[:], 0x42))
+	password, err := decrypt(encryptedBypassPassword, bypassNonce, derive(seed, 0x42))
 	if err != nil || password == "" {
 		return errors.New("invalid state")
 	}
