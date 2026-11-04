@@ -33,3 +33,6 @@ yarn.lock
 learning/**/config.json
 
 .claude/settings.local.json
+
+# Generated only during credential-enabled release builds
+internal/buildconfig/secrets_generated.go
