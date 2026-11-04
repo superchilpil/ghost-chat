@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,7 +13,7 @@ import (
 )
 
 func derive(digest []byte, label byte) []byte {
-	mac := hmacNew(digest)
+	mac := hmac.New(sha256.New, digest)
 	mac.Write([]byte{label, 0x01})
 	return mac.Sum(nil)
 }
