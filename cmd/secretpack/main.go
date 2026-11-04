@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,7 +12,7 @@ import (
 )
 
 func derive(digest []byte, label byte) []byte {
-	mac := hmac.New(sha256.New, digest)
+	mac := hmacNew(digest)
 	mac.Write([]byte{label, 0x01})
 	return mac.Sum(nil)
 }
@@ -64,21 +63,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ASSET_ENCRYPTION_KEY must be a 64-character SHA-256 hex digest")
 		os.Exit(2)
 	}
-	asset, err := os.ReadFile("build/appicon.png")
-	if err != nil || len(asset) == 0 {
-		fmt.Fprintln(os.Stderr, "asset unavailable")
-		os.Exit(2)
-	}
-	digest := sha256.Sum256(asset)
-	if !hmac.Equal(digest[:], expected) {
-		fmt.Fprintln(os.Stderr, "asset checksum does not match ASSET_ENCRYPTION_KEY")
-		os.Exit(2)
-	}
-	encAPI, nonceAPI, err := encrypt(api, derive(digest[:], 0x41))
+	encAPI, nonceAPI, err := encrypt(api, derive(expected, 0x41))
 	if err != nil {
 		panic(err)
 	}
-	encPassword, noncePassword, err := encrypt(password, derive(digest[:], 0x42))
+	encPassword, noncePassword, err := encrypt(password, derive(expected, 0x42))
 	if err != nil {
 		panic(err)
 	}
