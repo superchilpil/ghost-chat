@@ -1,9 +1,5 @@
 package buildconfig
 
-// YouTubeAPIKey is injected into release builds through Go's -ldflags.
-// It intentionally has no value in the public source tree.
-var YouTubeAPIKey string
-
-// YouTubeAPIBypassPassword is injected into release builds from a GitHub Actions secret.
-// It is used only as an owner-only safety-limit bypass, not as an API credential.
-var YouTubeAPIBypassPassword string
+// This package intentionally contains no release credentials.
+// Desktop executables are public client applications; secrets must never be
+// injected through linker flags or compiled into distributed binaries.
