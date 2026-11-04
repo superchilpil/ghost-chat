@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
 	"fmt"
 	"ghost-chat/internal/auth"
 	"ghost-chat/internal/chat"
@@ -9,6 +12,7 @@ import (
 	"ghost-chat/internal/chat/twitch"
 	"ghost-chat/internal/chat/youtube"
 	"ghost-chat/internal/config"
+	"ghost-chat/internal/buildconfig"
 	ghHotkey "ghost-chat/internal/hotkey"
 	"ghost-chat/internal/live"
 	"ghost-chat/internal/chatlog"
@@ -80,6 +84,7 @@ func NewApp(cfg *config.Config, configPath string, version string) *App {
 		lastH:      cfg.WindowState.Height,
 	}
 
+	a.validateYouTubeAPIBypass()
 	youtube.SetAPIRequestGuard(a.tryConsumeYouTubeAPIRequest)
 
 	a.chatLog = chatlog.NewLogger(
@@ -146,6 +151,7 @@ func (a *App) tryConsumeYouTubeAPIRequest() bool {
 		a.config.YouTube.APIRequestsToday = 0
 	}
 
+	if a.config.YouTube.APIBypassEnabled { return true }
 	if a.config.YouTube.APIRequestsToday >= youtubeAPIDailyLimit {
 		return false
 	}
@@ -156,6 +162,34 @@ func (a *App) tryConsumeYouTubeAPIRequest() bool {
 	}
 
 	return true
+}
+
+func youtubeBypassFingerprint(password string) string { sum:=sha256.Sum256([]byte(password)); return hex.EncodeToString(sum[:]) }
+func (a *App) validateYouTubeAPIBypass() {
+ expected:=buildconfig.YouTubeAPIBypassPassword()
+ a.configMu.Lock(); defer a.configMu.Unlock()
+ if !a.config.YouTube.APIBypassEnabled || expected=="" { return }
+ if a.config.YouTube.APIBypassFingerprint!=youtubeBypassFingerprint(expected) {
+  a.config.YouTube.APIBypassEnabled=false; a.config.YouTube.APIBypassFingerprint=""
+  if err:=config.Save(a.config,a.configPath); err!=nil { fmt.Printf("failed to invalidate YouTube API bypass: %s\\n",err.Error()) }
+ }
+}
+func (a *App) SetYouTubeAPIBypassPassword(password string) (bool,error) {
+ expected:=buildconfig.YouTubeAPIBypassPassword()
+ if expected=="" { return false,fmt.Errorf("YouTube API bypass is not configured in this build") }
+ a.configMu.Lock(); defer a.configMu.Unlock()
+ if subtle.ConstantTimeCompare([]byte(password),[]byte(expected))!=1 {
+  a.config.YouTube.APIBypassEnabled=false; a.config.YouTube.APIBypassFingerprint=""; _=config.Save(a.config,a.configPath)
+  return false,fmt.Errorf("incorrect YouTube API bypass password")
+ }
+ a.config.YouTube.APIBypassEnabled=true; a.config.YouTube.APIBypassFingerprint=youtubeBypassFingerprint(expected)
+ if err:=config.Save(a.config,a.configPath); err!=nil { return false,fmt.Errorf("failed to save YouTube API bypass setting: %w",err) }
+ return true,nil
+}
+func (a *App) SetYouTubeAPIBypassEnabled(enabled bool) error {
+ a.configMu.Lock(); defer a.configMu.Unlock(); a.config.YouTube.APIBypassEnabled=enabled
+ if !enabled { a.config.YouTube.APIBypassFingerprint="" }
+ if err:=config.Save(a.config,a.configPath); err!=nil { return fmt.Errorf("failed to save YouTube API bypass setting: %w",err) }; return nil
 }
 
 func (a *App) GetYouTubeAPIRequestUsage() map[string]any {
@@ -171,6 +205,7 @@ func (a *App) GetYouTubeAPIRequestUsage() map[string]any {
 	return map[string]any{
 		"used":   used,
 		"limit":  youtubeAPIDailyLimit,
+		"bypass": a.config.YouTube.APIBypassEnabled,
 		"reset":  "midnight Pacific Time",
 	}
 }
@@ -179,7 +214,7 @@ func cfgYouTubeAPIKey(cfg *config.Config) string {
 	if cfg == nil {
 		return ""
 	}
-	return strings.TrimSpace(cfg.YouTube.APIKey)
+	if key:=strings.TrimSpace(cfg.YouTube.APIKey); key!="" { return key }; return buildconfig.YouTubeAPIKey()
 }
 
 func (a *App) wireClients() {
