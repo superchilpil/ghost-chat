@@ -80,10 +80,27 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
 
+      - name: Encrypt release credentials
+        run: go run ./cmd/secretpack
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
+
       - name: Build Windows application
         run: wails3 task build
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
+
+      - name: Verify embedded credentials
+        run: go run ./cmd/secretpack -verify bin/ghost-chat.exe
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
+
+      - name: Remove generated credential source
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Force internal/buildconfig/secrets_generated.go -ErrorAction SilentlyContinue
 
       - name: Install NSIS
         shell: powershell
@@ -217,7 +234,7 @@ jobs:
 
             ### Self-building
 
-            Users who build Ghost Chat themselves must provide their own **YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable. Prebuilt releases do not contain a shared YouTube API key. YouTube chat uses the unauthenticated Innertube fallback by default. Users who choose to supply their own YouTube Data API v3 key can configure it locally; it is stored in their user configuration and is never embedded in the executable.
+            Users who build Ghost Chat themselves must provide their own **YouTube Data API v3 key** through the `YOUTUBE_API_KEY` environment variable. Prebuilt releases include an obfuscated, encrypted YouTube Data API credential used for StreamList. YouTube API use is limited to five requests per day per installation, with automatic Innertube fallback.
 
             ### Installation / Usage / Bug reporting
 
