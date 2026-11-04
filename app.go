@@ -414,7 +414,7 @@ func (a *App) UpdateConfig(cfg *config.Config) error {
 	a.config.Twitch.Account = account
 
 	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
-		yt.SetAPIKey(cfg.YouTube.APIKey)
+		yt.SetAPIKey(cfgYouTubeAPIKey(cfg))
 	}
 
 	if err := config.Save(a.config, a.configPath); err != nil {
@@ -571,7 +571,7 @@ func (a *App) setYouTubeInput(input string) {
 	a.config.YouTube.ChannelID = input
 	a.config.YouTube.VideoURL = input
 	if yt, ok := a.clients[chat.PlatformYouTube].(*youtube.Client); ok {
-		yt.SetAPIKey(a.config.YouTube.APIKey)
+		yt.SetAPIKey(cfgYouTubeAPIKey(a.config))
 	}
 	if err := config.Save(a.config, a.configPath); err != nil {
 		fmt.Printf("failed to save YouTube input: %s\n", err)
