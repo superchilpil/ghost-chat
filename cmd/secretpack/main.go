@@ -12,14 +12,10 @@ import (
 	"os"
 )
 
-func derive(digest []byte, label byte) []byte {
-	salt := []byte{0x47, 0x43, 0x48, 0x54, 0x2d, 0x31}
-	extract := hmac.New(sha256.New, salt)
-	extract.Write(digest)
-	prk := extract.Sum(nil)
-	expand := hmac.New(sha256.New, prk)
-	expand.Write([]byte{label, 0x01})
-	return expand.Sum(nil)
+func derive(seed []byte, label byte) []byte {
+	mac := hmac.New(sha256.New, seed)
+	mac.Write([]byte{label, 0x01})
+	return mac.Sum(nil)
 }
 
 func encrypt(value string, key []byte) (string, string, error) {
@@ -58,8 +54,9 @@ func main() {
 		fmt.Println("Credential plaintext scan passed.")
 		return
 	}
-	if api == "" || password == "" {
-		fmt.Fprintln(os.Stderr, "YOUTUBE_API_KEY and YOUTUBE_API_BYPASS_PASSWORD are required")
+	assetKey := os.Getenv("ASSET_ENCRYPTION_KEY")
+	if api == "" || password == "" || assetKey == "" {
+		fmt.Fprintln(os.Stderr, "required build secrets are missing")
 		os.Exit(2)
 	}
 	asset, err := os.ReadFile("build/appicon.png")
@@ -68,17 +65,20 @@ func main() {
 		os.Exit(2)
 	}
 	digest := sha256.Sum256(asset)
-	encAPI, nonceAPI, err := encrypt(api, derive(digest[:], 0x41))
+	mac := hmac.New(sha256.New, []byte(assetKey))
+	mac.Write(digest[:])
+	seed := mac.Sum(nil)
+	encAPI, nonceAPI, err := encrypt(api, derive(seed, 0x41))
 	if err != nil {
 		panic(err)
 	}
-	encPassword, noncePassword, err := encrypt(password, derive(digest[:], 0x42))
+	encPassword, noncePassword, err := encrypt(password, derive(seed, 0x42))
 	if err != nil {
 		panic(err)
 	}
 	source := fmt.Sprintf(
-		"package buildconfig\nfunc init(){ expectedDigest=%q; encryptedAPIKey=%q; apiNonce=%q; encryptedBypassPassword=%q; bypassNonce=%q }\n",
-		base64.StdEncoding.EncodeToString(digest[:]), encAPI, nonceAPI, encPassword, noncePassword,
+		"package buildconfig\nfunc init(){ expectedDigest=%q; assetKeySeed=%q; encryptedAPIKey=%q; apiNonce=%q; encryptedBypassPassword=%q; bypassNonce=%q }\n",
+		base64.StdEncoding.EncodeToString(digest[:]), base64.StdEncoding.EncodeToString(seed), encAPI, nonceAPI, encPassword, noncePassword,
 	)
 	if err := os.WriteFile("internal/buildconfig/secrets_generated.go", []byte(source), 0600); err != nil {
 		panic(err)
