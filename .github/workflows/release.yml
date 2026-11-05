@@ -98,11 +98,6 @@ jobs:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_API_BYPASS_PASSWORD: ${{ secrets.YOUTUBE_API_BYPASS_PASSWORD }}
 
-      - name: Remove generated credential source
-        if: always()
-        shell: pwsh
-        run: Remove-Item -Force internal/buildconfig/secrets_generated.go -ErrorAction SilentlyContinue
-
       - name: Install NSIS
         shell: powershell
         run: |
@@ -114,6 +109,11 @@ jobs:
         run: wails3 task package FORMAT=nsis
         env:
           VERSION: ${{ needs.determine-version.outputs.version }}
+
+      - name: Remove generated credential source
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Force internal/buildconfig/secrets_generated.go -ErrorAction SilentlyContinue
 
       - name: Prepare Windows release assets
         shell: bash
